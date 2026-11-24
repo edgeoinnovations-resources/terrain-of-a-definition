@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Terrain of a Definition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--hot:#ff4fa3;
+  /* layout: a block diagram fills the left; a reading column sits on the right; the time scrubber runs under the diagram */
+  --ink:#0e1a2b;        /* chart-at-night background */
+  --ink-2:#15253b;      /* raised surfaces */
+  --rule:#2a3d58;       /* hairlines */
+  --paper:#f3ead6;      /* quotation text, like the journal's page */
+  --text:#dfe7f1;
+  --muted:#8ea0b8;
+  --focus:#ffd98a;
+  --display:"Libre Caslon Text","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --ui:"Archivo Narrow","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--ink);color:var(--text);font-family:var(--ui);font-size:16px;line-height:1.45}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 390px;grid-template-rows:auto minmax(0,1fr) auto;height:100%}
+header{grid-column:1;padding:18px 24px 6px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,3.2vw,40px);line-height:1.08;margin:0 0 6px;text-wrap:balance;color:var(--paper)}
+h1 em{font-style:italic}
+.lede{margin:0;max-width:66ch;color:var(--muted);font-size:16px}
+.lede b{color:var(--text);font-weight:500}
+.stage{grid-column:1;grid-row:2;position:relative;min-height:300px;overflow:hidden;touch-action:none;cursor:grab}
+.stage.dragging{cursor:grabbing}
+.stage.over{cursor:pointer}
+.stage canvas{display:block;width:100%;height:100%}
+.lab{position:absolute;left:0;top:0;white-space:nowrap;pointer-events:none;font-size:13px;letter-spacing:.04em;will-change:transform}
+.lab.school{text-transform:uppercase;font-weight:600;font-size:12px;text-shadow:0 1px 3px var(--ink),0 0 8px var(--ink)}
+.lab.year{color:var(--muted);font-variant-numeric:tabular-nums;text-shadow:0 1px 3px var(--ink)}
+.lab.gap{color:var(--muted);font-family:var(--display);font-style:italic;font-size:13px;letter-spacing:0}
+.mark{position:absolute;left:0;top:0;pointer-events:none;z-index:2;background:var(--hot);color:#1a0a12;font-weight:700;font-size:13px;letter-spacing:.02em;padding:3px 9px;border-radius:2px;white-space:nowrap;box-shadow:0 0 14px rgba(255,79,163,.55);font-variant-numeric:tabular-nums}
+.mark::after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--hot)}
+.mark.off{opacity:0}
+.tip{position:absolute;left:0;top:0;max-width:280px;background:var(--ink-2);border:1px solid var(--rule);padding:8px 10px;font-size:14px;pointer-events:none;opacity:0;transition:opacity .12s;z-index:3}
+.tip.on{opacity:1}
+.tip i{font-family:var(--display);color:var(--paper)}
+.hint{position:absolute;right:14px;top:10px;color:var(--muted);font-size:13px;pointer-events:none}
+.scan{position:absolute;left:12px;bottom:10px;display:flex;align-items:center;gap:3px;z-index:3;opacity:.55;transition:opacity .15s}
+.scan:hover,.scan.on{opacity:1}
+.scan button{width:30px;height:28px;padding:0;background:rgba(22,33,56,.7);border:1px solid var(--rule);color:var(--text);border-radius:2px;cursor:pointer;font-size:14px;line-height:1;touch-action:none;user-select:none;-webkit-user-select:none}
+.scan button:hover{border-color:var(--muted);color:var(--paper)}
+.scan button:active{background:var(--paper);color:var(--ink)}
+.scan button.ctr{width:auto;padding:0 10px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-left:4px}
+.scan .lbl{color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin:0 6px 0 4px;pointer-events:none}
+.scan.on .lbl{color:var(--hot)}
+.controls{grid-column:1;grid-row:3;padding:10px 24px 16px;border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:transparent;border:1px solid var(--rule);padding:4px 10px 4px 8px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-size:14px;border-radius:2px}
+.chip .sw{width:10px;height:10px;background:var(--c);display:inline-block}
+.chip .ct{color:var(--muted);font-variant-numeric:tabular-nums}
+.chip[aria-pressed="false"]{opacity:.4}
+.chip[aria-pressed="false"] .sw{background:transparent;outline:1px solid var(--c)}
+.chip:hover{border-color:var(--muted)}
+.time{display:flex;align-items:center;gap:14px}
+.play{background:var(--paper);color:var(--ink);border:0;padding:7px 14px;font-weight:600;cursor:pointer;border-radius:2px;min-width:132px}
+.play:hover{background:#fff}
+.time input{flex:1;min-width:0;accent-color:var(--paper)}
+.yr{font-family:var(--display);font-size:26px;color:var(--paper);font-variant-numeric:tabular-nums;min-width:4ch;text-align:right}
+aside{grid-column:2;grid-row:1 / span 3;border-left:1px solid var(--rule);background:var(--ink-2);overflow:auto;padding:22px 24px;display:flex;flex-direction:column;gap:18px}
+.meta{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.sch{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+.sch .sw{width:10px;height:10px;background:var(--c)}
+.bigyr{font-family:var(--display);font-size:44px;line-height:1;color:var(--paper);font-variant-numeric:tabular-nums}
+blockquote{margin:0;font-family:var(--display);font-size:21px;line-height:1.42;color:var(--paper);text-wrap:pretty;border-left:3px solid var(--c);padding-left:16px}
+.src{font-size:15px;color:var(--text);margin:0}
+.src .k{display:block;color:var(--muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.src + .src{margin-top:-6px}
+.note{color:var(--muted);font-size:14px;margin:0}
+a{color:var(--paper);text-underline-offset:3px}
+.nav{display:flex;align-items:center;gap:10px;position:sticky;top:-22px;margin:-22px -24px 0;padding:14px 24px 12px;background:var(--ink-2);border-bottom:1px solid var(--rule);z-index:2}
+.nav button{background:transparent;border:1px solid var(--rule);padding:7px 14px;cursor:pointer;border-radius:2px;min-width:104px}
+.nav button:hover{border-color:var(--muted)}
+.nav .n{color:var(--muted);font-variant-numeric:tabular-nums;margin-left:auto;font-size:14px}
+.about{border-top:1px solid var(--rule);padding-top:14px;color:var(--muted);font-size:14px}
+.about h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--text);margin:0 0 6px;font-weight:600}
+.about p{margin:0 0 8px;max-width:60ch}
+.schooldesc{color:var(--muted);font-size:14px;margin:-10px 0 0}
+@media (max-width:860px){
+  html,body{height:auto}
+  .app{display:block;height:auto}
+  header{padding:16px 16px 4px}
+  .stage{height:380px}
+  .lab.school,.lab.gap{display:none}
+  .controls{padding:10px 16px 14px}
+  aside{border-left:0;border-top:1px solid var(--rule);padding:18px 16px 28px}
+  .nav{top:-18px;margin:-18px -16px 0;padding:12px 16px 10px}
+  .hint{display:none}
+}
+@media (prefers-reduced-motion:reduce){.tip{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>The terrain of a definition: <em>what is geography?</em></h1>
+    <p class="lede" id="lede">Definitions of geography printed in the <b>Journal of Geography</b>, raised into a block diagram. Each ridge is one way of answering the question. It stands tall where that answer was given often. Every pin is one definition you can read.</p>
+  </header>
+
+  <div class="stage" id="stage" aria-label="3D block diagram of definitions of geography by year and school of thought. Drag to turn, scroll to zoom, select a pin to read it.">
+    <div class="hint">Drag to turn · scroll or pinch to zoom · select a pin</div>
+    <div class="scan" id="scan" role="group" aria-label="Zoom in and scan along the timeline. Hold an arrow to glide; Center returns the view home.">
+      <span class="lbl">scan</span>
+      <button type="button" id="scanL" aria-label="Scan earlier">&#8592;</button>
+      <button type="button" id="scanR" aria-label="Scan later">&#8594;</button>
+      <button type="button" id="scanC" class="ctr" aria-label="Return to the centre view">Center</button>
+    </div>
+    <div class="mark" id="mark"></div>
+    <div class="tip" id="tip"></div>
+  </div>
+
+  <div class="controls">
+    <div class="chips" id="chips" role="group" aria-label="Show or hide a school of thought"></div>
+    <div class="time">
+      <button class="play" id="play" type="button">Build from 1902</button>
+      <input type="range" id="reveal" min="0" max="124" step="1" value="124" aria-label="Show definitions up to this year">
+      <span class="yr" id="yr">2026</span>
+    </div>
+  </div>
+
+  <aside aria-live="polite">
+    <div class="nav">
+      <button type="button" id="prev">← Earlier</button>
+      <button type="button" id="next">Later →</button>
+      <span class="n" id="p-n"></span>
+    </div>
+    <div class="meta">
+      <span class="sch" id="p-sch"></span>
+      <span class="bigyr" id="p-yr"></span>
+    </div>
+    <p class="schooldesc" id="p-desc"></p>
+    <blockquote id="p-q"></blockquote>
+    <p class="src" id="p-by"></p>
+    <p class="src" id="p-src"></p>
+    <p class="note" id="p-note"></p>
+    <div class="about">
+      <h2>How to read the diagram</h2>
+      <p>Left to right is time, 1902 to 2026. Ridge height is the number of definitions of that kind printed around that year, smoothed over about a year either side. Every decade from the 1900s to the 2020s is represented.</p>
+      <p>The sorting into eight schools is an interpretation, made by reading each passage. A definition that fits two schools was placed with the idea it leans on hardest.</p>
+      <p>Quotations were cleaned of scanning errors. The file sometimes lists a passage under the article next to the one it came from, so check the DOI before citing.</p>
+      <h2>The data</h2>
+      <p>Every pin comes from one CSV of passages found by scanning the Journal for sentences that define geography: 1,549 passages with year, author, title, volume, DOI and the surrounding text, including the passages that were read and not pinned. <a href="data/jog_definition_passages.csv" download="jog_definition_passages.csv" id="csvdl">Download the CSV</a> (1.1 MB).</p>
+    </div>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* ---------- schools, front row first ---------- */
+const SCHOOLS = [
+  {k:"open",  n:"Declining to define",      c:"#a99cdc", d:"Writers who doubt the question, dodge it, or refuse a single answer."},
+  {k:"desc",  n:"The Earth described",      c:"#c9b596", d:"Geography describes the Earth as it is, with its peoples and products."},
+  {k:"whole", n:"The Earth as a living whole", c:"#7cc884", d:"Geography sees the Earth as an organism, or as the place where every science meets."},
+  {k:"infl",  n:"The land shapes its people", c:"#e0695c", d:"Geography studies how the natural environment influences human life."},
+  {k:"space", n:"Distribution, place, region", c:"#7095ea", d:"Geography is the science of where things are: distributions, places, regions and landscapes."},
+  {k:"adj",   n:"People adjust to the land", c:"#ead56a", d:"Geography studies human adjustment and response to environment; human ecology."},
+  {k:"home",  n:"The Earth as the home of man", c:"#f3a65a", d:"The stock classroom definition of the period."},
+  {k:"rel",   n:"Mutual relations",          c:"#52b9c6", d:"Geography studies the relations between people, life and environment."}
+];
+const SI = {}; SCHOOLS.forEach((s,i)=>SI[s.k]=i);
+
+/* ---------- sources: [author as filed, title, vol(issue): pages, DOI suffix] ---------- */
+const R = {
+  mar:["William B. Marshall","Useful Products of the Century Plant a Lesson on Mexico","1(1): 6–24","00221340208985852"],
+  bry:["James Bryce","The Importance of Geography in Education","1(4): 145–151","00221340208985878"],
+  br1:["Journal of Geography","Book Reviews","1(7): 338–342","00221340208985474"],
+  br2:["Journal of Geography","Geographic Literature: Book Reviews","1(9): 436–437","00221340208985895"],
+  sem:["Ellen Churchill Semple","Emphasis Upon Anthropo-Geography in Schools","3(8): 366–374","00221340408985533"],
+  sut:["W. J. Sutherland","The Rational Element as an Organizing Principle in Geography","4(3): 97–105","00221340508985581"],
+  gen:["Martha Krug Genthe","Results to be Expected from a School Course in Geography","4(4): 155–159","00221340508985594"],
+  dry:["Charles R. Dryer","What is Geography?","4(8): 348–360","00221340508986056"],
+  far:["Amos W. Farnham","The Geography Course in the Oswego State Normal and Training School","5(3): 109–119","00221340608986100"],
+  dav:["W. M. Davis","An Inductive Study of the Content of Geography","5(4): 145–160","00221340608986109"],
+  moo:["William Charles Moore","What a Child Ought to Know at the End of His School Geography Course","5(7): 320–325","00221340608986137"],
+  cha:["James F. Chamberlain","Some Essentials in Geography","5(8): 369–375","00221340608986144"],
+  gul:["F. P. Gulliver","Training in Geography","5(10): 468–473","00221340608986159"],
+  wvt:["Journal of Geography","Words Versus Things in Geography Teaching","6(1): 28–29","00221340708986170"],
+  lif:["Journal of Geography","Life Geography from the Child's Point of View","6(3): 98–101","00221340708986182"],
+  n09:["Journal of Geography","Notes","7(6): 134–143","00221340908985386"],
+  n10:["Journal of Geography","Notes","8(9): 210–216","00221341008986227"],
+  gre:["W. M. Gregory","Symposium Upon What is Most Needed in the Teaching of Elementary Geography","10(8): 245–262","00221341208985701"],
+  ch2:["James F. Chamberlain","Preparation for the Teaching of Geography","11(2): 37–40","00221341208985746"],
+  fa2:["Amos W. Farnham","The Relation of Some Recent Engineering Problems to Geography","11(2): 40–45","00221341208985747"],
+  rob:["Edward Van Dyke Robinson","Editorial: Commercial Geography","11(6): 203–206","00221341308985802"],
+  dod:["Richard Elwood Dodge","The Modern Point of View in Geography Teaching","12(6): 161–164","00221341408985021"],
+  rid:["Douglas C. Ridgley","The Problem of Place Geography","12(10): 333–340","00221341408983642"],
+  tow:["Walter S. Tower","The Question of Field Work in Geography","12(10): 345–350","00221341408983645"],
+  gil:["Melvin R. Gilmore","A Glimpse at Nebraska Indian Geography","13(6): 179–185","00221341508983935"],
+  fai:["H. W. Fairbanks","What Should Elementary School Geography Include and in What Order Should Its Materials Be Presented?","13(7): 201–208","00221341508983943"],
+  ind:["Journal of Geography","Aims in Teaching Geography: As Laid Down by the Indianapolis Course of Study","15(6): 192–193","00221341708984021"],
+  cle:["E. S. Clem","Supplementary Work in the Teaching of Geography","16(7): 267–270","00221341808983841"],
+  fnd:["H. W. Fairbanks","A New Definition of Geography","18(5): 185–188","00221341908984807"],
+  whi:["Wallace E. Whitehouse","Correspondence","18(8): 321–323","00221341908984846"],
+  ash:["Bessie L. Ashton","A Course in Geography for Normal Schools","19(8): 295–308","00221342008984901"],
+  sta:["Mabel C. Stark","Some Suggestions for Needed Lines of Emphasis in Our Normal School Geography","21(7): 245–253","00221342208984995"],
+  fgr:["James Fairgrieve","Geography and World Power","21(8): 285–294","00221342208984163"],
+  wbk:["R. H. Whitbeck","Fact and Fiction in Geography by Natural Regions","22(3): 86–94","00221342308984204"],
+  hot:["E. A. Hotchkiss","Project: A Sand Map of Africa","22(6): 223–233","00221342308984234"],
+  lac:["E. E. Lackey","The Classification and Use of Geographic Principles","23(2): 64–71","00221342408983550"],
+  gp4:["Journal of Geography","Geographical Publications","23(4): 159–160","00221342408983571"],
+  sym:["Clare Symonds","High School Geography","24(8): 314–323","00221342508984928"],
+  hun:["C. C. Huntington","What is Social Geography?","25(3): 90–96","00221342608984331"],
+  dak:["W. S. Dakin","Reflections on the Teaching of Geography: II. The Place of History in Evaluating Geographic Influences","25(5): 184–192","00221342608984937"],
+  von:["O. D. Von Engeln","A Rejoinder to “Geography's Affiliations”","25(7): 273–277","00221342608984783"],
+  ren:["G. T. Renner","Some Principles of Commercial Geography","25(9): 337–342","00221342608984596"],
+  bri:["Albert Perry Brigham","Contribution of Geography in Senior High Grades","26(5): 165–174","00221342708984642"],
+  bro:["Ralph H. Brown","A Method of Teaching Regional Geography","26(7): 270–276","00221342708984662"],
+  han:["Walter Hansen","Suggestions for Writing Geographic Principles","27(6): 219–224","00221342808984714"],
+  shr:["Ida May Shrode","A Catalog Study of Geography in Educational Institutions Above the High School","28(5): 189–201","00221342908984548"],
+  ri2:["Douglas C. Ridgley","Two New Courses of Study in Geography","28(8): 318–326","00221342908984975"],
+  pea:["Roderick Peattie","The Consequence of Provincialisms","28(8): 327–333","00221342908984976"],
+  exp:["Journal of Geography","An Experiment in Geographic Writing","29(1): 1–4","00221343008987256"],
+  orc:["John E. Orchard","The Introductory Course in Economic Geography in the School of Business","29(5): 187–198","00221343008987290"],
+  re2:["G. T. Renner","The Introductory Geography Course in Science","30(1): 33–38","00221343108987160"],
+  bil:["Edith V. Brill","What Method Shall We Use in Teaching Geography?","30(3): 125–130","00221343108987315"],
+  kop:["Helen M. Kopf","One-Cycle or Two-Cycle Geography","31(5): 193–198","00221343208987184"],
+  log:["Marguerite Logan","A Guide to the Organization of a Geographic Unit","31(7): 269–278","00221343208987201"],
+  thr:["Zoe A. Thralls","Criteria for the Selection and Organization of Subject Matter in Geography","31(8): 324–330","00221343208987795"],
+  ree:["Edwin H. Reeder","Method in Geography","32(4): 152–158","00221343308987228"],
+  wat:["Ruth R. Watson","The Geography Assembly","32(5): 200–209","00221343308987237"],
+  all:["Agnes M. Allen","A Survey of Books on Methods of Teaching of Geography 1887–1932","32(7): 285–290","00221343308987334"],
+  bar:["Charles C. Barnes","The Place of Social Geography in the High School","33(5): 178–186","00221343408987390"],
+  gar:["Maurice A. Garfinkel","Modern Tendencies in the Teaching of Geography","33(5): 187–194","00221343408987391"],
+  par:["A. E. Parkins","The Geography of American Geographers","33(6): 221–230","00221343408987396"],
+  ri3:["Douglas C. Ridgley","Geography in the Elementary School as Revealed in Textbooks","34(6): 237–244","00221343508987845"],
+  rmb:["Robert M. Brown","An Outline in Political Geography","34(6): 244–248","00221343508987846"],
+  hud:["G. Donald Hudson","Geography and Regional Planning","34(7): 267–277","00221343508987853"],
+  lof:["John J. Loftus","The Activity Program as a Means of Vitalizing the Teaching of Geography","34(9): 349–356","00221343508987868"],
+  g37:["Journal of Geography","Geographical Publications","36(2): 76–78","00221343708987968"],
+  g38:["Journal of Geography","Geographical Publications","37(1): 39–44","00221343808987478"],
+  mey:["Alfred H. Meyer","The Chorographic Commentator: A Geographic Guide to Relationship Thinking","40(4): 145–152","00221344108987733"],
+  csm:["Carl S. Meyer","Geography for the Junior Colleges","41(6): 221–227","00221344208986448"],
+  ncg:["Alfred H. Meyer","National Council of Geography Teachers: Report of Committee on Standards of Certification for the Teaching of Geography in High Schools","42(2): 41–58","00221344308986609"],
+  adv:["Journal of Geography","Advertisements for issue 42(8)","42(8)","00221344308986672"],
+  whw:["C. Langdon White; Joseph E. Williams","Will Geography be a Core Subject in the Post-War Secondary School Curriculum?","44(1): 11–16","00221344508987023"],
+  bec:["Henry F. Becker","Preliminary Report of the Curriculum Committee of the National Council of Geography Teachers","44(2): 51–79","00221344508987032"],
+  veg:["Dorothy O. Vegter","Introducing Geography to Fourth-Graders","45(3): 114–118","00221344608986529"],
+  rut:["Edward J. Rutan","Learning the Language of Geography","45(5): 204–206","00221344608986548"],
+  b46:["C. C. Barnes","Fifteen Years of High School Geography","45(6): 213–220","00221344608986553"],
+  jam:["Preston E. James","Differences from Place to Place","45(7): 279–285","00221344608986562"],
+  g47:["Journal of Geography","Geographical Publications","46(2): 82","00221344708986702"],
+  vcl:["Eugene Van Cleef","World Events and their Implications in the Geography Curriculum","46(3): 91–96","00221344708986704"],
+  hal:["L. H. Halverson","Whither Conservation Education?","46(5): 178–181","00221344708986719"],
+  mcc:["Shannon McCune","Exercises for Teaching Local Geography at the College Level","47(7): 290–293","00221344808987100"],
+  hdg:["Bert Hudgins","Geographical Publication","48(7): 305–308","00221344908986858"],
+  kim:["George C. Kimber","The Place of Geography in a General Education Program","48(7): 265–275","00221344908986852"],
+  wan:["L. M. Wantland","Geography is Vital to the Business Student","49(6): 243–248","00221345008982489"],
+  alx:["John W. Alexander","Geography of Manufacturing: What is It?","49(7): 284–287","00221345008985204"],
+  fre:["Otis W. Freeman","Geography Among the Sciences","50(5): 202–210","00221345108982672"],
+  vrp:["Joseph E. van Riper","The Teaching of College Physical Geography","51(7): 292–296","00221345208982763"],
+  mxf:["O. Orland Maxfield","Principles: An Approach to Economic Geography","52(1): 25–32","00221345308982789"],
+  gri:["Paul F. Griffin","Secondary School Geography and the Needs of Our Times","52(2): 60–67","00221345309353749"],
+  wts:["J. Wreford Watson","Geography in Relation to the Physical and Social Sciences","52(8): 313–323","00221345308982808"],
+  slc:["Pauline Schlechty","Source Unit for Third Grade Community Geography","52(8): 339–347","00221345308982812"],
+  hts:["Richard Hartshorne","Where in the World Are We? Geographic Understanding for Political Survival and Progress","52(9): 382–393","00221345308982821"],
+  gel:["Lawrence Gelfand","Ellen Churchill Semple: Her Geographical Approach to American History","53(1): 30–41","00221345408982523"],
+  hof:["Elizabeth Hoffmann","Is It Essential for the American Student to Be Geographically Informed?","53(4): 149–153","00221345408982556"],
+  g54:["Journal of Geography","Geographical Publications","53(5): 228","00221345408982576"],
+  bkl:["Theresa Bourke; Rod Lane","A Comparison of the International Charters on Geographical Education","117(4): 174–180","00221341.2017.1353122"],
+  dml:["Dong-min Lee","Toward a Typology of Changes in Primary Teachers' Awareness of Geography Based on Receiving Graduate Education","117(5): 216–228","00221341.2018.1463387"],
+  lgh:["Thomas Larsen; Matthew Gerike; John Harrington","Human-Environment Thinking and K-12 Geography Education","121(1): 34–46","00221341.2021.2005666"],
+  bmh:["Tomáš Bendl; Miroslav Marada; Lenka Havelková","Preservice Geography Teachers' Exposure to Problem Solving and Different Teaching Styles","122(3): 66–76","00221341.2023.2220114"],
+  mcn:["Robert B. McNee","Geographic Objectives in General Education: The Regional Method","55(8): 390–394","00221345608983019"],
+  koe:["Grace E. Koerner","The Vital Role and Scope of Geography","56(4): 177–180","00221345708983132"],
+  sct:["Kathryn G. Scott","Experiences with Integration in the Junior High School","56(4): 181–184","00221345708983133"],
+  lem:["Minnie E. Lemaire","A Sequential Study of Weather and Climate in a Geography Curriculum","56(6): 269–275","00221345708983152"],
+  egj:["Eureal Grant Jackson","The Role of the Geography Teacher in Democracy Fulfillment","56(6): 281–286","00221345708983154"],
+  a58:["Journal of Geography","Advertisements for issue 57(3)","57(3)","00221345808983317"],
+  wrm:["Henry J. Warman","Changing Emphases in Geographic Education","57(5): 219–228","00221345808983330"],
+  b59:["Journal of Geography","Book Reviews","58(9): 460–464","00221345908983281"],
+  lry:["Dong-min Lee; Jaemyong Ryu","Mindful Learning in Geography: Cultivating Balanced Attitudes Toward Regions","114(5): 197–210","00221341.2015.1046897"],
+  dow:["Roger M. Downs","Meeting the Challenge of Systemic Change in Geography Education: Lucy Sprague Mitchell's Young Geographers","115(1): 3–11","00221341.2015.1017516"],
+  kkk:["Cadey Korson; Weronika Kusek","The Comparison of a Thematic versus Regional Approach to Teaching a World Geography Course","115(4): 159–168","00221341.2015.1076498"],
+  chd:["Roland E. Chardon","Geography: A Working Definition","61(2): 71–75","00221346208982172"],
+  alm:["Sarfaraz Alam","Recent Trends in School Geography in India","109(6): 243–250","00221341.2010.502944"],
+  boe:["Richard G. Boehm; Carmen P. Brysch; Audrey Mohan; Alan Backler","A New Pathway: Video-Based Professional Development in Geography","111(2): 41–53","00221341.2011.584068"],
+  ley:["Joseph Leydon; Sally Turner","The Challenges and Rewards of Introducing Field Trips Into a Large Introductory Geography Class","112(6): 248–261","00221341.2013.833279"],
+  bnt:["Gert Jan Bent; Anouke Bakx; Perry den Brok","Pupils' Perceptions of Geography in Dutch Primary Schools: Goals, Outcomes, Classrooms Environment, and Teacher Knowledge and Performance","113(1): 20–34","00221341.2013.810299"],
+  sny:["Secil Senyurt","Turkish Primary Students' Perceptions of Geography","113(4): 160–170","00221341.2013.873477"],
+  mur:["Alexander B. Murphy","Geography's Crosscutting Themes: Golden Anniversary Reflections on “The Four Traditions of Geography”","113(5): 181–188","00221341.2014.918639"],
+  jbd:["Injeong Jo; Sarah Witham Bednarz","Dispositions Toward Teaching Spatial Thinking Through Geography: Conceptualization and an Exemplar Assessment","113(5): 198–207","00221341.2014.881409"],
+  fly:["Barry N. Floyd","Putting Geography in its Place","62(3): 117–120","00221346308981956"],
+  scf:["Neville V. Scarfe","Geography as an Autonomous Discipline in the School Curriculum","63(7): 297–301","00221346408985095"],
+  b81:["Journal of Geography","Book Reviews","80(1): 36–39","00221348108980229"],
+  wei:["Edwin T. Weiss","The Troubled Status of Geography in the High Schools of Northern Kentucky","80(3): 108–112","00221348108980391"],
+  koh:["Clyde F. Kohn","Looking Back; Working Ahead","81(2): 44–46","00221348208980708"],
+  hrp:["Robert A. Harper","Geography in General Education: The Need to Focus on the Geography of the Field","81(4): 122–139","00221348208980867"],
+  lig:["Clemenc Ligocki","High School Geography and the Need for Communication","81(5): 188–190","00221348208980727"],
+  tua:["Yi-Fu Tuan","Orientation: An Approach to Human Geography","82(1): 11–14","00221348308980755"],
+  pj3:["Preston E. James","Problems and Opportunities in Geography","82(3): 92–93","00221348308980788"],
+  frd:["Larry R. Ford","A Core of Geography: What Geographers Do Best","83(3): 102–106","00221348408980474"],
+  eyr:["L. Alan Eyre","Biblical Symbolism and the Role of Fantasy Geography Among the Rastafarians of Jamaica","84(4): 144–148","00221348508979381"],
+  mas:["Donald Massey","Inside a Textbook","85(3): 116–119","00221348608979016"],
+  tus:["Julie A. Tuason","Reconciling the Unity and Diversity of Geography","86(5): 190–193","00221348708979483"],
+  b88:["Journal of Geography","Book Reviews and Books Received","87(4): 150–158","00221348808979784"],
+  c9a:["Journal of Geography","Communication from Readers","89(2): 84–87","00221349008979601"],
+  c9b:["Journal of Geography","Communication from Readers","89(3): 134–138","00221349008979615"],
+  hs9:["Richard Hartshorne","Where in the World Are We? (reprinted)","89(5): 198–201","00221349008979195"],
+  sm9:["Ellen Churchill Semple","Emphasis Upon Anthropo-Geography in Schools (reprinted)","89(5): 208–211","00221349008979197"],
+  hr2:["Robert A. Harper","At Issue: What is Geography's Contribution to General Education","91(3): 124–125","00221349208979097"],
+  hem:["Mohammed Hemmasi","Spatial Diffusion of Islam: A Teaching Strategy","91(6): 263–272","00221349208979108"],
+  r93:["Journal of Geography","Reviews","92(2): 86–98","00221349308979626"],
+  jac:["Dorothy R. Jacobson","Realities and Opportunities for Funding Geography Education","93(1): 50–53","00221349408979687"],
+  hnt:["James Hantula","Communication from Readers","94(1): 341","00221349508979739"],
+  arc:["Kevin Archer","A Folk Guide to Geography as a Holistic Science","94(3): 404–411","00221349508979343"],
+  mrc:["Jody Smothers Marcello","Geography in Alaska: Holding the Standards High","94(4): 453–458","00221349508979755"],
+  fe1:["Edward A. Fernald","The Need That Just Won't Go Away","95(1): 2–4","00221349608978397"],
+  her:["Dan Hermann","Developing a Spatial Perspective: Using the Local Landscape to Teach Students to Think Geographically","95(4): 162–167","00221349608978716"],
+  chr:["Journal of Geography","The International Charter on Geographical Education","96(1): 33–39","00221349708978753"],
+  grz:["Charles F. Gritzner","What Is Where, Why There, and Why Care?","101(1): 38–40","00221340208978465"],
+  fe2:["E. A. Fernald","Using the Definition of Geography to Develop Teaching Strategies","101(3): 126–130","00221340208978485"],
+  mer:["Christopher D. Merrett","Social Justice: What Is It? Why Teach It?","103(3): 93–101","00221340408978584"],
+  lor:["Robert C. Lord","Responses to Commentary by James Marran, “Geography: An Essential School Subject”","103(5): 218–225","00221340408978603"],
+  alf:["Forsyth S. Alfred; Joan N. Maier","Affective Outcomes of a World Geography Course","105(2): 59–66","00221340608978662"],
+  kir:["Joseph M. Kirman","Aesthetics in Geography: Ideas for Teaching Geography Using Poetry","106(5): 207–214","00221340701816483"],
+  gn3:["Journal of Geography","Geographical Notes","2(10): 528–541","00221340308986002"],
+  dsc:["William M. Davis","A Scheme of Geography","3(1): 20–31","00221340408986011"],
+  dhg:["W. M. Davis","Home Geography","4(1): 1–5","00221340508985562"],
+  n08:["Journal of Geography","Notes","6(9): 294–304","00221340808985608"],
+  gss:["Journal of Geography","Geography in Secondary School Courses","6(9)","00221340808985605"],
+  srf:["G. T. Surface","Geography in the High School","6(11)","00221340808985615"],
+  gr1:["W. M. Gregory","Present Problems in Elementary School Geography","9(7): 193–195","00221341108986305"],
+  wig:["Journal of Geography","What is Geography?","10(2)","00221341108985642"],
+  mrz:["C. L. Martzolff","Robinson Crusoe: A Study in the New Geography","10(9): 295–297","00221341208985713"],
+  drg:["Charles Redway Dryer","Regional Geography","11(3): 73–75","00221341208985761"],
+  msp:["Clement L. Martzolff","Some Phases of the New Geography","11(7): 219–223","00221341308985808"],
+  brr:["Albert Perry Brigham","Remarks on Geography in America","12(7): 202–205","00221341408983511"],
+  lan:["Mary J. Lanier","The Subject Matter for an Elementary Course in Economic and Commercial Geography","12(10): 351–354","00221341408983646"],
+  a15:["Journal of Geography","Advertisements for issue 13(7)","13(7)","00221341508983949"],
+  stv:["W. J. Stevens","Geography in the St. Louis Elementary Schools","14(1): 13–19","00221341508983703"],
+  dal:["Charles A. Daly","Teaching Commercial Geography","16(1)","00221341708983731"],
+  vec:["O. D. Von Engeln","A Campaign for Geography","18(1): 28–30","00221341908984437"],
+  tho:["Helen Goss Thomas","How Shall We Teach Geography?","19(7)","00221342008984890"],
+  g21:["Journal of Geography","Geographical Publications","20(4): 159–160","00221342108984516"],
+  kno:["Daniel C. Knowlton","The Relation of Geography to the Social Studies in the Curriculum","20(6): 225–234","00221342108985016"],
+  hlm:["E. E. Holmes","The Kind of Geography the Working World Needs","21(2): 72–77","00221342208984114"],
+  day:["Rachel E. Day","The Teaching of Place Geography","21(3)","00221342208984123"],
+  war:["Amy Ware","A Plea for the Average Teacher","21(4): 147–148","00221342208984133"],
+  thp:["Zoe A. Thralls","They Entered Unprepared. What Can Be Done?","23(3): 115–120","00221342408983562"],
+  rj4:["Douglas C. Ridgley; Preston E. James","Geographic Principles and Their Application to the Teaching of Geography","23(4): 136–141","00221342408983566"],
+  gp8:["Journal of Geography","Geographical Publications","23(8)","00221342408983608"],
+  vef:["O. D. Von Engeln","Fresh Air and Sunshine","25(3)","00221342608984332"],
+  gat:["Vincent Gatto","Suggestions to Rural School Teachers of Geography","25(7): 264–267","00221342608984781"],
+  rna:["G. T. Renner","Geography's Affiliations","25(7): 267–272","00221342608984782"],
+  a28:["Journal of Geography","Advertisements for issue 27(3)","27(3)","00221342808984572"],
+  ncm:["C. E. Cooper; N. A. Bengtson; Julia Shipman; George J. Miller","New York Meeting, National Council of Geography Teachers","28(2): 81–87","00221342908984765"],
+  bag:["William C. Bagley","The Element of Adventure in Teaching and Learning Geography","28(3): 89–99","00221342908984770"],
+  abr:["Selma Abrams","Summary of the First Summer Field Course in High School Geography of the New Orleans Public Schools","29(1): 25–29","00221343008987259"],
+  g32:["Journal of Geography","Geographical Publications","31(5)","00221343208987192"],
+  pro:["Malcolm J. Proudfoot","The Use of Photographic Material in Teaching Elementary Geography","31(9)","00221343208987806"],
+  mcw:["Wallace R. McConnell","Problems of Instruction in Geography","32(4): 149–151","00221343308987227"],
+  dhd:["D. H. Davis","How the Yearbook Impresses the Professional Geographer","32(4)","00221343308987229"],
+  ber:["William J. Berry","Some Opinions Relative to the Content and Grouping of Geography","32(6): 236–242","00221343308987245"],
+  g35:["Journal of Geography","Geographical Publications","34(3): 131–132","00221343508987451"],
+  blo:["Pearle Blood","The Preparation of Geography Units by Student Teachers","35(1)","00221343608987883"],
+  poo:["Sidman P. Poole","Successive Settlement Patterns on the Site of Syracuse","37(3): 99–108","00221343808987488"],
+  vbs:["Villa B. Smith","High School Geography and Geographic Thinking","44(6)","00221344508986469"],
+  wil:["Leonard S. Wilson","The Position of Regional Geography in Current Liberal Arts Education","47(4): 141–150","00221344808987065"],
+  bel:["Lyda Belthuis","How Shall We Train our Prospective Geography Teachers?","48(4): 143–149","00221344908986831"],
+  ost:["Harry John Osterhart","“The Place” of Geography","48(4): 171–173","00221344908986834"],
+  e49:["Journal of Geography","Editorial Notes and News","48(4): 174–176","00221344908986836"],
+  lft:["Lewis F. Thomas","An Appraisal of Teaching Geography at the College, University and Graduate School Level","49(4)","00221345008982462"],
+  dix:["Ernest S. Dix","Bringing Grade School Projects Into the College Classroom","49(8): 329–336","00221345008982501"],
+  a52:["Journal of Geography","Advertisements for issue 51(2)","51(2)","00221345208982745"],
+  bk2:["Henry F. Becker","Some Implications of Resource-Use Education for Geographers","51(3): 103–111","00221345208982749"],
+  a54:["Journal of Geography","Advertisements for issue 53(3)","53(3)","00221345408982552"],
+  stm:["John Strietelmeier; Alfred H. Meyer","An Attempt at Making Geographers Out of Students","53(5): 211–214","00221345408982570"],
+  ken:["Lorrin G. Kennamer","The Unique Change in School Geography","54(1): 25–32","00221345508982831"],
+  brw:["W. A. Browne","The Geographer as Coordinator","54(2)","00221345508982846"],
+  rhr:["Raymond H. Roberts","How Textbooks Influence the Curriculum in Geography","57(5): 250–256","00221345808983334"],
+  tay:["James Woodall Taylor","Geographic Bases of the Gadsden Purchase","57(8): 402–410","00221345808983366"],
+  a59:["Journal of Geography","Advertisements for issue 58(3)","58(3)","00221345908983219"],
+  s59:["N. V. Scarfe","Geography Across the Curriculum","58(3): 111–121","00221345908983209"],
+  kon:["Clyde F. Kohn","Spatial Dimensions of Human Activities: Significance for Geographic Education","58(3): 121–127","00221345908983210"],
+  boo:["C. W. Booth","Landscape and the Geographer","58(3): 138–140","00221345908983213"],
+  hig:["James High","Geography: Coordinating Element in Secondary Social Studies","59(6)","00221346008982256"],
+  abw:["Albert W. Brown","The Role of Introductory Geography Courses in College Curricula","60(7): 321–326","00221346108982369"],
+  fus:["Robert H. Fuson","Geography and General Education","60(9): 422–427","00221346108982109"],
+  hil:["Wilhelmina Hill","A Tentative Working Outline of Geographic Sequences for Kindergarten Through High School","61(1)","00221346208982379"],
+  tom:["George S. Tomkins","Using the Population Map as a Point of Departure for Regional Study in the High School","61(8)","00221346208982158"],
+  b65:["Journal of Geography","Book Reviews","64(2)","00221346508981975"],
+  hel:["Nicholas Helburn","Improving Communication Between the Teacher and the Geographer","64(4): 149–153","00221346508982225"],
+  mor:["John W. Morris","Geography: Separate Course or Integrated?","64(5): 202–205","00221346508982399"],
+  mrm:["Willis B. Merriam","Geography and the 1964 Swiss National Exhibition","64(9): 395","00221346508982020"],
+  hws:["Richard Hartshorne","Why Study Geography?","65(3)","00221346608981544"],
+  con:["William B. Conroy","The Misuse of Geography","65(3)","00221346608981546"],
+  grn:["Barry J. Garner","Aspects and Trends of Urban Geography","65(5): 206–211","00221346608982413"],
+  nel:["Ronald E. Nelson","The Settlement Approach in Teaching Regional Geography","65(8): 358–361","00221346608981376"],
+  rhb:["Robert Harold Brown","Fundamentals of Geographic Education","65(9): 410–415","00221346608985158"],
+  kar:["Herbert G. Kariel","Scope of Geographic Study","66(4): 150–154","00221346708981219"],
+  stn:["Fredric R. Steinhauser","The Study of Geography","66(7): 350–359","00221346708981389"],
+  b67:["Journal of Geography","Books in Brief","66(7): 404–408","00221346708981403"],
+  wht:["Wayne R. White","Geography and the Organization of Knowledge","66(9): 496–499","00221346708981428"],
+  nos:["Richard L. Nostrand","A Model for Geography","67(1): 13–17","00221346808981033"],
+  pj9:["Preston E. James","The Significance of Geography in American Education","68(8)","00221346908981166"],
+  stb:["John E. Steinbrink","Systematic Geography for Grade 4: A Spatial Systems Approach","69(2): 105–107","00221347008981760"],
+  now:["W. S. Nowak","On the Interdisciplinary Approach to Geography","69(7): 401–403","00221347008981843"],
+  jmr:["John M. Renner","Ecosystem Studies and Geographic Education","69(7): 404–407","00221347008981844"],
+  dls:["David Lawrence Smith","Airborne Regional Geography","69(8)","00221347008982293"],
+  twk:["Journal of Geography","They Want to Know","69(8)","00221347008982300"],
+  wpt:["Henry J. Warman","Perpetual Transformation: A Concept of Change and Choice","69(9)","00221347008981862"],
+  l83:["Journal of Geography","Letters to the Editor","82(1): 4","00221348308980752"],
+  hr5:["Robert A. Harper","New Teaching Opportunities and Challenges for US Geography","84(1): 3–4","00221348508979260"],
+  etz:["Journal of Geography","Etceteras","84(5): 234","00221348508979144"],
+  lib:["Michael Libbee","World Geography and International Understanding","87(1): 5–12","00221348808979766"],
+  r88:["Journal of Geography","Reviews","87(1): 29–33","00221348808979770"],
+  nor:["William Norton","Human Geography and the Geographical Imagination","88(5): 186–192","00221348908979578"],
+  ve9:["O. D. Von Engeln","A Campaign for Geography (reprinted)","89(5): 225–226","00221349008979201"],
+  mrn:["James F. Marran","The World According to a Grade 12 Teacher","91(4): 139–142","00221349208979501"],
+  nr2:["William Norton","Clarifying the Discipline of Human Geography: An Aid to Effective Teaching","91(6): 277–279","00221349208979110"],
+  mra:["Danielle A. Marra","Teaching to the National Geography Standards Through Children's Picture Books","95(4)","00221349608978713"],
+  kml:["James R. Kimmel","Using the National Geography Standards and Your Local River to Teach About Environmental Issues","95(2): 66–72","00221349608978927"],
+  kei:["Timothy A. Keiper","GIS for Elementary Students","98(2)","00221349908978860"],
+  shm:["Martha B. Sharma","Population in Advanced Placement Human Geography","99(3–4): 99–110","00221340008978905"],
+  gmm:["Charles F. Gritzner","The Geographic “Mental Map”: Can “Anyone” (Really) Teach Geography?","103(1): 43–45","00221340408978571"],
+  gol:["Reginald G. Golledge","Reflections on Procedures for Learning Environments Without the Use of Sight","104(3): 95–103","00221340508978622"],
+  sek:["Diane Carver Sekeres; Madeleine Gregg","The Stealth Approach: Geography and Poetry","107(1): 3–11","00221340801910129"],
+  fuh:["Sven Fuhrmann and colleagues","Teaching Disaster Preparedness in Geographic Education","107(3): 112–120","00221340802458482"],
+  ibg:["Stuart Semple; Elisabeth Dawson","Geography in the International Baccalaureate","107(4–5)","00221340802487317"],
+  dnk:["Daniel P. Donaldson; Olaf Kuhlke","Jules Verne's Around the World in Eighty Days: Helping Teach the National Geography Standards","108(2)","00221340902945958"],
+  sch:["Sandra J. Schmidt","Making Space for the Citizen in Geographic Education","110(3): 107–119","00221341.2011.537671"],
+  hrs:["Lauren McArthur Harris and colleagues","Exploring Teachers' Use of Resources to Integrate Geography and History","114(4): 158–167","00221341.2014.959986"],
+  mph:["Alexander B. Murphy; Phillip R. Hare","The Nature of Geography and Its Perspectives in AP Human Geography","115(3): 95–100","00221341.2015.1111405"],
+  lh8:["Thomas B. Larsen; John A. Harrington","Developing a Learning Progression for Place","117(3)","00221341.2017.1337212"],
+  jon:["Mark C. Jones","Missing Major: The Limited Presence of Geography in New England Higher Education","122(1): 2–19","00221341.2023.2172200"],
+  aix:["Xin Ai; Tim Favier; Tine Beneker; Yushan Duan","Orientations of Chinese Geography Teachers Towards Climate Change Education","124(4): 91–103","00221341.2025.2528020"],
+  fl1:["Barry Floyd","On Reversing the Image of a Simplistic Geography: The Task of Socio-Economic Geography (Geonomics)","70(2): 84–90","00221347108981591"],
+  bb1:["Journal of Geography","Books in Brief","70(5): 316–317","00221347108981648"],
+  gji:["Paul F. Griffin","Journal Interview","70(6): 324–327","00221347108981652"],
+  mji:["Lisle S. Mitchell","Journal Interview","70(7): 388–390","00221347108981873"],
+  whm:["Katheryne Thomas Whittemore","Celebrating Seventy-Five Years of The Journal of Geography, 1897–1972","71(1): 7–18","00221347208981441"],
+  eli:["John Eliot","Some Research Possibilities","71(4): 201–214","00221347208981487"],
+  gf2:["Journal of Geography","Geographers' Forum","71(7): 388–390","00221347208981696"],
+  mcl:["Lisle S. Mitchell","The Collage: Its Use in Geographic Learning","71(7): 422–429","00221347208981700"],
+  wb3:["Bob J. Walter; Frank E. Bernard","A Thematic Approach to Regional Geography","72(8): 14–28","00221347308981339"],
+  pji:["Preston James","Journal Interview","73(3): 8–19","00221347408985189"],
+  pj5:["Preston E. James","Geographic Concepts and World Crises","74(1): 8–15","00221347508979852"],
+  haf:["Jill Hafner","ERIC Documents","74(2): 104–106","00221347508979868"],
+  aug:["John P. Augelli","Geographic Concepts and the Caribbean Crisis Area","74(7): 393–402","00221347508979929"],
+  gbi:["Charles F. Gritzner","The Bicentennial: Foreword to a Tricentennial","75(2): 121–125","00221347608980585"],
+  sau:["Carl O. Sauer","The Seminar as Exploration","75(2): 77–81","00221347608980580"],
+  rhj:["Richard H. Jackson","The Persistence of Outmoded Ideas in High School Geography Texts","75(7): 399–408","00221347608980606"],
+  ncp:["Journal of Geography","National Council for Geographic Education: Preliminary Annual Conference Program","75(6): 369–383","00221347608980841"],
+  jlr:["J. Lewis Robinson","A New Look at the Four Traditions of Geography","75(9): 520–530","00221347608980845"],
+  mci:["Terry L. McIntosh","The International Wealth Gap and Geography Instruction","77(1): 16–24","00221347808980059"],
+  lbb:["Kristin Sheridan Libbee; Michael Libbee","Geography, Education, and the Women's Movement","77(5): 176–180","00221347808980113"],
+  wbn:["Bob J. Walter; Nancy Bain","Anglo-American Regional Geography Textbooks: New Yet Old","78(2): 71–74","00221347908979950"],
+  hbs:["Raymond Hubbard; Robert H. Stoddard","High School Students' Images of Geography: An Exploratory Analysis","78(5): 188–194","00221347908979986"],
+  gbl:["Charles F. Gritzner; William E. Blake","Right-Left Brain Functions: Geographic Implications","78(6): 246","00221347908980003"],
+  dan:["Christina E. Dando; Jacob J. Chadwick","Enhancing Geographic Learning and Literacy Through Filmmaking","113(2): 78–84","00221341.2013.846394"],
+  cal:["Susan Caldis; Lauren Hammond; Kelly León; Nina Scholten; Tricia Seow","Geography Education Research in the World: Mapping Challenges and Opportunities Across Countries","125(4): 169–179","00221341.2026.2663770"]
+};
+const OLDNEW="Added in the 16 November 2026 rescan.";
+const OLD2="Added in the 18 November 2026 update.";
+const OLD3="Added in the 20 November 2026 update.";
+const OLD4="Added in the second 20 November 2026 update.";
+const OLD5="Added in the third 20 November 2026 update.";
+const OLD6="Added in the 21 November 2026 update.";
+const OLD7="Added in the second 21 November 2026 update.";
+const OLD8="Added in the 22 November 2026 update.";
+const OLD9="Added in the 23 November 2026 update.";
+const NEW="Added in the 24 November 2026 update, the last one.";
+const SPILL="The text reads as if it belongs to a neighbouring article in the same issue.";
+/* ---------- definitions: [year, school, quotation, who is quoted (if named), source key, note] ---------- */
+const D = [
+[1902,"rel","Geography is the study of the earth in its existing condition and in relation to man (and life in general).","","mar",SPILL],
+[1902,"desc","Geology is the study of the past in the light of the present, while geography is the study of the present in the light of the past.","Halford Mackinder","mar",SPILL],
+[1902,"desc","Geography is the science which takes for its province the describing to us of everything that relates to the Earth.","","bry"],
+[1902,"home","Geography is the study of the earth as the home of man.","A textbook under review","br1"],
+[1902,"desc","Geography is the study of the earth and its inhabitants.","“The good old definition,” as the reviewer calls it","br2"],
+[1903,"space","We may begin by defining geography as the science of distributions.","An unsigned note, two years before Dryer's survey","gn3",OLD9],
+[1904,"rel","In its present modern phase, geography is essentially concerned with the rational correlation of the items that fall under its two parts: … the inorganic conditions that constitute the physical environment of living forms; and … the organic response made by living forms to their environment.","","dsc",OLD9],
+[1904,"open","There are people who question whether geography is really a science at all. There is lack of agreement as to what should be included under the term and what excluded.","","sem",OLD9+" Also filed under the following article, Whitbeck's “Practical Work in School Geography.”"],
+[1904,"infl","Geography is the study of the land and its effect upon its people; history is the study of a people in whose economic, social, and political development the land is an essential and potent factor.","","sem","Filed twice, under Brigham's article and Semple's, which meet on page 366."],
+[1905,"rel","Geography then becomes “the study of the earth in relation to life.”","","dhg",OLD9+" Reprinted by request from the Journal of School Geography, 1897."],
+[1905,"adj","Geography is the science that treats of the earth's crust in its present condition, the forces which fashioned this crust, and the adjustment and adaptation of life to the crust.","","sut"],
+[1905,"space","Geography is that part of earth lore which explains the causes and consequences of location.","","gen"],
+[1905,"home","Geography is the study of the earth as the home of man.","Charles A. McMurry","dry"],
+[1905,"rel","Geography includes the study of the surface forms of the earth and the reciprocal relations of the different branches …","International Geographical Congress, Venice, 1881","dry","The passage is cut off mid-sentence in the file."],
+[1905,"space","General geography deals with the general laws of the distribution of every class of phenomena on the earth's surface.","Professor Neumann, Freiburg","dry"],
+[1905,"space","Distribution is of the essence of geography.","Halford Mackinder","dry"],
+[1905,"space","Geography is the science of the topographical distribution of the great features of the earth's surface, and of all that it sustains, mineral, vegetable and animal, including man himself.","J. Scott Keltie","dry"],
+[1905,"space","Geography is the science of distributions.","","dry"],
+[1905,"rel","Geography is the science which deals with the mutual relations of relief, climate, and life.","","dry"],
+[1905,"whole","Geography views the earth as a living organism.","Arnold Guyot, as Dryer reports him","dry"],
+[1905,"rel","Geography [is] the relation between the earth and its living inhabitants, between the physical environment and the environed organism.","W. M. Davis","dry"],
+[1905,"space","Geography is the science which deals with the distribution of every feature and the environment of every creature on the face of the earth.","Dryer's “definition of the future”","dry"],
+[1906,"rel","Geography is the study of the earth in its relation to man.","","far"],
+[1906,"space","If geography is defined simply as the science of distribution, then the distribution of anything at all is a fit subject for geographical study.","Davis, objecting","dav"],
+[1906,"rel","… an understanding of the relation of each individual to his surroundings. This is simply what is expressed, of course, in the usual definition of geography.","","moo"],
+[1906,"rel","Geography is the study of the mutual relations between man and his environment.","","cha"],
+[1906,"rel","Geography deals with many of the complex interrelations between man and the plants and animals which surround him.","","gul"],
+[1907,"rel","The central thought of home geography is the study of the relations between the pupils and their own environment.","","wvt","Also filed under the preceding article, Barker's “A Field Study of Lava Flow.”"],
+[1907,"desc","Geography deals with things, and these things must be described through words.","","wvt"],
+[1907,"home","Geography is the study of the earth as the home of man.","","lif"],
+[1908,"rel","Geography sets forth the relations existing between man and his physical environment, classifies and explains the influences and responses.","","n08",OLD9],
+[1908,"home","In the matter of definition for the science we have not gone far beyond [Ritter's] conception, that geography treats of the earth as the home of man.","Carl Ritter, as the note reports him","n08",OLD9],
+[1908,"rel","I believe that geography is a study of the earth in its relation to life—plant, animal, and human; that neither the study of the earth unrelated to life nor the study of life without emphasis on its relations to the earth is geography.","“A Brief Confession of a Geographic Faith”","gss",OLD9],
+[1908,"desc","The teacher's greatest difficulty is to remove from the mind of the student the impression that geography is a science of an indefinite number of isolated facts.","","srf",OLD9],
+[1909,"whole","One of the most beautiful and perplexing things about geography is that it is not a subject of study at all … It ramifies; it percolates; it trickles down through everything you try to teach.","","n09"],
+[1910,"open","To discuss the nature and limits of organic geography seems to require a definition of geography. Attempts to define may be confusing and unprofitable.","","n10"],
+[1911,"rel","Elementary geography is essentially a fact study. Its content is chosen for the information it yields concerning the relation of life to the earth.","","gr1",OLD9],
+[1911,"open","When one hears a geography lesson as it is conducted according to the present course of study in the Chicago schools, one naturally asks whether geography is every thing, or anything.","","wig",OLD9],
+[1912,"rel","New Geography is essentially a study of relationships.","","mrz",OLD9+" Also filed under the preceding article, Clem's “Laboratory Work in Physiography.”"],
+[1912,"rel","The “new geography” may be defined as the study of the relations of earth features to one another, culminating in the relations of human societies to their natural environments.","","drg",OLD9],
+[1912,"rel","Geography is fast becoming a scientific study of environments.","A. J. Herbertson, quoted by Dryer","drg",OLD9],
+[1912,"adj","The function of geography is that of adjusting pupils to their physiographic, economic and social environments.","","gre"],
+[1912,"desc","Until recent years geography was defined as “a description of the earth's surface and its inhabitants” … Geographers no longer accept this definition.","","ch2"],
+[1912,"home","The accepted definition of Geography today is “The study of the earth in its relation to man,” or “The study of the earth as the home of man.”","","fa2"],
+[1913,"whole","Geography thus becomes the meeting place of all the sciences.","","msp",OLD9],
+[1913,"home","General geography is usually defined as the study of the earth as the home of man; which means that the earth rather than man is the subject of study.","","rob"],
+[1913,"adj","Commercial geography is the study of psychic or economic adaptation to environment, both physical and social.","","rob"],
+[1914,"home","We may arrive at more philosophical definitions of geography, but we shall not suffer, if with all diligence, we give ourselves to the study of the Earth as the home of man.","","brr",OLD9+" Also filed under the following article, Reed's “The Japan Current.”"],
+[1914,"rel","Accepting as the definition of geography “a study of the earth in its relations to life,” economic geography is concerned with tracing the influence of natural factors in the production of things useful to man.","","lan",OLD9],
+[1914,"infl","Modern geography deals with the reasons for human conditions on this terrestrial body.","","dod"],
+[1914,"rel","Geography is the study of the earth in its relation to life.","","rid"],
+[1914,"home","By general consent, geography is the science which deals with the earth as the home of man.","","tow"],
+[1915,"space","Geography has indeed been defined as the science of distributions and their interrelations. There is much to be said for that view, except that it does not sufficiently emphasize the human aspect of the science.","A publisher's advertisement quoting a new textbook","a15",OLD9],
+[1915,"rel","They accept the definition, as a working guide, that geography is primarily a study of the relationship between man and his environment.","The St. Louis elementary schools' geography committee","stv",OLD9],
+[1915,"home","A definition so commonly used that it has become trite is as follows: “geography is a study of the earth and man” or “a study of the earth as the home of man.” These definitions are so brief and inadequate that they fail to convey any real conception of the subject.","Fairbanks, rejecting it","fai",OLD9],
+[1915,"rel","Since geography is the study of the earth's relation to life, the science may be divided into physical geography and biogeography.","","gil"],
+[1915,"whole","Geography is the science which brings all into correlation with each other.","James Bryce","fai"],
+[1915,"whole","[Geography is] the reciprocal action of all these forces, the perpetual play of which constitutes what might be called the life of the globe.","Arnold Guyot","fai"],
+[1915,"whole","Geography is the study of the earth as an organism.","Fritsche, as Fairbanks reports him","fai"],
+[1915,"whole","Geography is the science of the earth as an organic whole whose parts are continually reacting upon each other.","","fai"],
+[1915,"whole","Geography is a study of the earth as a living organism whose parts and functions are mutually dependent.","","fai"],
+[1917,"home","Geography is a study of the earth as the home of man. Commercial and Industrial Geography is a study of the earth as the work-shop of man.","","dal",OLD9],
+[1917,"infl","Geography, then, is not only a description of the earth's surface, but a study of the people who inhabit it, and their life as affected by physical environment.","The Indianapolis Course of Study","ind","Appears three times in the file, under three neighbouring articles."],
+[1918,"rel","Geography is the study of the interaction between man and earth.","Charles A. McMurry","cle"],
+[1919,"desc","The pupil and his parents feel that geography is simply the acquirement of a miscellany of facts about places and peoples with no significant trend in the whole study.","","vec",OLD9],
+[1919,"whole","We may therefore define geography as the science which seeks to understand the world as a living organism.","Fairbanks's “new definition”","fnd",OLD9+" Also filed under the following article, Davis's “Seaports.”"],
+[1919,"rel","Geography is not a study or memorizing of facts, but a study of the relations existing among facts.","","fnd"],
+[1919,"open","It is becoming increasingly difficult to define geography.","","whi"],
+[1920,"adj","After all, what is geography? Simply the study of the response of life to the natural physical environment.","","tho",OLD9],
+[1920,"adj","Geography is the study of the human response to the geographic environment. It is the study of the relations of man to physical conditions.","","ash"],
+[1921,"adj","They indicate that geography as a distinct science is now assuming definition. Discussion of the adjustment of life to natural environment is the theme of each volume.","A reviewer of three new textbooks","g21",OLD9],
+[1921,"infl","Geography is concerned with the earth's crust regarded as the home of man, and all its emphasis must be laid upon these physical compulsions from which history shows him labouring to escape.","","kno",OLD9],
+[1922,"whole","It is the organic unity of the world in which man “lives, moves and has his being” that geography has primarily to investigate.","","hlm",OLD9],
+[1922,"rel","Geography is a study of the physical environment and its relation to life. A study of places is a part of geography but it is not a distinct subject in itself.","","day",OLD9+" Also filed under the preceding article, Caldwell's “An Atlas of France.”"],
+[1922,"desc","She is hearing the text in a hodgepodge fashion, having a hazy idea geography means location and products.","Ware, on the average teacher","war",OLD9],
+[1922,"home","Geography does have to do with the earth as the present and future home for people.","","sta"],
+[1922,"home","While history deals with the drama, geography deals with the stage on which the drama is played.","","fgr"],
+[1923,"adj","Geography deals with man's reaction to his geographical environment as well as with physical features of the environment.","","wbk"],
+[1923,"infl","Geography is the story of man and the earth. It is earth-determined.","","hot"],
+[1924,"infl","The instructor must develop with his students the idea that geography is a study of the influence of the physical environment upon life, and man's reaction to his physical environment.","","thp",OLD9],
+[1924,"rel","Geography thus becomes the interpreter to man of the relationships existing between human activities and the physical environment in which man lives.","","rj4",OLD9],
+[1924,"adj","This book has little to offer to those who believe that geography is a study of human adjustments to the various factors in the natural environment.","A book reviewer","gp8",OLD9],
+[1924,"rel","Geography, then, is a study of those universal relationships that exist between human activities and earth conditions.","","lac"],
+[1924,"infl","… if geography is the study of the influence of natural environment upon the distribution, characteristics and activities of man …","A book reviewer","gp4"],
+[1925,"adj","Geography is the study of the adjustments made by peoples to fit themselves to the best possible advantage into their natural or earth environment.","","sym"],
+[1926,"desc","Fundamentally, geography is concerned with the earth and the natural phenomena of that earth, the wind and the weather, the soil, the rocks, the clean hills, and the wide plains.","","vef",OLD9],
+[1926,"adj","Geography is primarily a study of place relations, and the adjustments which man makes to the geographic regions with their varied resources.","Mendel Branom, quoted by Gatto","gat",OLD9],
+[1926,"rel","Human geography deals not with the study of man, but with a study of the relations of man's activities to the environment. In other words geography is a study of relationship.","","rna",OLD9],
+[1926,"space","H. R. Mill, the great English geographer, has defined his field as “the science of distributions.”","Hugh Robert Mill, quoted by Renner","ren",OLD9],
+[1926,"rel","[Social geography's] function is the study of man, his distribution, and his activities, in their relation to the various geographic factors.","","hun"],
+[1926,"home","A familiar and accepted definition of geography has been, “Geography is a study of the earth as the home of man.”","","dak"],
+[1926,"adj","The definition of geography as a study of the people of the world in their efforts to adjust themselves to their environment gives us a truer and more natural approach.","","dak"],
+[1926,"rel","… geography in its broadest sense “a study of the environment in its relation to man's activities.”","","von"],
+[1926,"adj","There has gradually arisen in America the idea that geography is the study of the adjustment of man's activities to the environment.","","ren"],
+[1927,"open","I have no fault to find with attempts to define geography. I would not object to trying it myself, when I find a dearth of more interesting things to do.","","bri",OLD9],
+[1927,"open","Whether you put distribution, or geographic influence, or what not, into your definition of geography, you can … enter on a task that is great and alluring.","","bri"],
+[1927,"rel","Geography is the study of the interrelations between man and his environment.","","bro"],
+[1928,"rel","The author believes that the ideal geography is a study of relations.","A publisher's advertisement","a28",OLD9],
+[1928,"rel","Geography deals with the relationships which exist between the physical environment and human activities.","","han"],
+[1929,"rel","Geography for the elementary school should be defined as the study of man in relation to his physical environment.","A speaker's conclusions reported from the Council's New York meeting","ncm",OLD9+" Also filed under Hartshorne's “The Iron and Steel Industry,” which it follows in the file."],
+[1929,"open","Whether geography is essentially a social science or essentially a natural science is a question in the settlement of which I prefer to remain an innocent bystander.","","bag",OLD9],
+[1929,"desc","The science that describes the surface of the earth, with its peoples and products.","Funk and Wagnalls Standard Dictionary","shr"],
+[1929,"home","The generally accepted definition of geography for the elementary schools is that it is the study of the earth as the home of man.","","ri2"],
+[1929,"home","The ultimate purpose of geography is the study of how mankind lives.","","pea"],
+[1930,"rel","The generally accepted definition and scope of geography as a school subject is: the interrelationships between the physical factors of the environment and all forms of life.","","abr",OLD9+" Also filed under the preceding article, Foster's “Sisal Production.”"],
+[1930,"rel","Most geographers agree that the central theme of geography deals with the relation of man to his natural environment.","","exp"],
+[1930,"rel","In the United States, geography is usually defined as the study of the relationships existing between living organisms and the physical environment.","","orc"],
+[1931,"adj","In its scientific aspect, geography has been defined, and probably will continue to be defined, as human ecology.","","re2","Also filed under the preceding article, Murphy's “The Geography of Burma.”"],
+[1931,"rel","Geography is the strategic subject connecting natural environment and man's activities.","","bil"],
+[1932,"rel","In this book the viewpoint that “vital geography is a science of relationships” is presented and maintained throughout.","A book reviewer","g32",OLD9],
+[1932,"adj","It is widely accepted among American geographers that geography is concerned with the adjustments, or relations of people and their ways of living to their natural environment.","","pro",OLD9],
+[1932,"rel","In its truest sense the nature of geography is that of relationship: relations between the organic and inorganic world.","","kop"],
+[1932,"rel","Modern geography is the scientific study of the relationship of cultural (man-made) items to the natural environmental (provided by nature) items.","","log"],
+[1932,"rel","… the modern definition of geography as a study of the interrelations existing between human needs and activities and the natural environment.","","thr"],
+[1933,"open","The British statesman who defined geography as a state of mind has given us the best definition of the subject that has ever been formulated. Geography is not a study of the earth as the home of man; it is what one thinks about as one studies how human life adjusts itself to the natural world.","","mcw",OLD9],
+[1933,"rel","The assumption in certain sections that geography is a study of “relationships” will not be endorsed generally.","Davis, reviewing the NSSE Yearbook","dhd",OLD9],
+[1933,"rel","In my opinion geography is primarily a natural science, the science of the earth in its relation to man.","A geographer's letter, quoted by Berry","ber",OLD9],
+[1933,"rel","… geography in its attempt to interpret man's interrelationships with his natural environment …","","ree"],
+[1933,"adj","Geography deals with the adjustment of men's activities to their natural environment.","","wat"],
+[1933,"home","Geography deals with materials giving a comprehensive picture of the earth as the dwelling place of man.","Archibald Geikie, 1887","all"],
+[1934,"desc","Social geography is a study of the world as it is today. It is a study of the peoples of the earth as they are grouped in geographic or in political regions.","","bar",OLD9],
+[1934,"infl","Geography is a study of relationships—relationship between the earth and the life that exists upon it. The geographic environment is a mould into which the human race has been poured.","Parkins's Group A, in his survey of American geographers","par",OLD9],
+[1934,"adj","Geography is essentially human ecology in that it is largely a study of the adjustment of the organism to the environment.","Parkins's Group C","par",OLD9],
+[1934,"space","Geography is a study of the present distribution of phenomena on the surface of the earth.","Parkins's Group D","par",OLD9],
+[1934,"desc","The basic objective of geography is a description of the face of the earth. This is what geography means to the layman and what geography has meant since the earliest time.","Parkins's Group D","par",OLD9],
+[1934,"open","To state a definition that would be generally accepted would be a difficult task.","","bar"],
+[1934,"infl","Physical geography is defined as “the study of the physical features of the earth and their influence on man.”","","bar"],
+[1934,"rel","One hundred years ago, geography was defined as the “study of the earth,” whereas today it is usually defined as the “study of the earth in its relation to man and life.”","","gar"],
+[1934,"space","Geography is the science of areas. Its function … is to observe, describe, map, classify, and explain the complex of natural and cultural phenomena which make up and give personality to such areas and regions.","","par"],
+[1934,"open","Some of us have come to believe that there is only one possible, sensible definition of geography, and that was the one the professor … told us was the one.","","par"],
+[1935,"rel","Geography is “the study of the reciprocal relationships between man and his environment.”","A textbook under review","g35",OLD9],
+[1935,"desc","Geography deals with the lands and the peoples of the world as they are today.","","ri3"],
+[1935,"space","… political geography is the study of a people in a place.","","rmb"],
+[1935,"open","Obviously no definition of geography need be offered here.","","hud"],
+[1935,"adj","[Geography is] “the study of human responses to earth controls.”","Edwin H. Reeder","lof"],
+[1936,"rel","From your study of regions you have learned that geography is concerned with the relationship between man's activities and his natural environment.","","blo",OLD9],
+[1937,"open","I have no mandates to define geography; but I want children to know where some of the more important people of the world are and what they are like.","A textbook author, quoted approvingly by the reviewer","g37",OLDNEW],
+[1938,"rel","They define geography as “the relationship between environment and life.”","Textbook authors, as the reviewer reports","g38",OLD9],
+[1938,"adj","If geography be defined as “Human Ecology,” the resultant relationships express themselves in a “pattern of occupance.”","","poo",OLD9],
+[1938,"desc","[Geography is the] “science of the earth and its life.”","A textbook author, as the reviewer reports","g38",OLDNEW],
+[1941,"rel","All will doubtless agree that geography is intrinsically a science of inter- and intra-regional relationships as concerns human activities in their environmental settings.","","mey",OLDNEW],
+[1942,"rel","Geography is the strategic subject connecting natural environment with man's activities.","A McKnight and McKnight teaching text; the same sentence appears in the 1931 entry","csm",OLD2],
+[1943,"space","Because geography deals with places and peoples it attempts to deal with problems and social processes as they are combined in regions.","","ncg",OLD2],
+[1943,"desc","Geography is more than the names of places and the understanding of directions. Geography deals with the earth and its life.","A textbook advertisement","adv",OLD2+" The advertisement ran six times between 1943 and 1945."],
+[1945,"whole","Geography may be considered as the bridge over the gap between the social and the natural sciences.","","whw",OLD9],
+[1945,"desc","To some, geography is a study of location and the listing of products; to others, the accumulation of statistical data and the memorizing of unrelated facts. To all too few is it a study of relationships.","","vbs",OLD9+" Also filed under the preceding article, James's “New Bridges Unite the Americas.”"],
+[1945,"space","Geography was then defined as the location of things on the earth. Under such a definition, geographic education was destined to wilt.","","whw",OLD2],
+[1945,"adj","Geography is the study of the way in which man is using his land and other resources to make a living.","","bec",OLD2],
+[1946,"rel","If geography is a study of man in relation to his environment, it is evident that a study of various peoples who inhabit the earth is needed.","","b46",OLD9],
+[1946,"home","The definition of geography as the “study of people and the lands in which they live” has been clarified.","","veg",OLD2],
+[1946,"rel","Geography is the study of the earth and its products, of man and his industries, and of their influence upon each other.","","rut",OLD2],
+[1946,"desc","Geography is the study thru which we see the world as it is today.","","b46",OLD2],
+[1946,"space","Geography deals with the differences which exist from place to place on the face of the earth.","","jam",OLD2],
+[1947,"desc","Too much of the public still conceives geography to be a study of locations and the drawing of maps.","","vcl",OLD9],
+[1947,"rel","Political geography is defined as the relation of the states, their organization and interrelation, to the physical environment.","A book under review","g47",OLD2+" Filed twice, under two neighbouring items."],
+[1947,"open","[It is not my] purpose to launch into an extended consideration of the definition of geography, but it does seem to me essential to declare my own point of view.","","vcl",OLD2],
+[1947,"space","Geography deals with landscapes, cultural and natural, as bases for the discovery, description, and interpretation of relationships arising as man occupies areas of the earth's surface.","","hal",OLD2],
+[1948,"desc","Geography as the description of the earth is the oldest, as the science of the interrelationships of man and his environment one of the youngest of the sciences.","","wil",OLD9+" Straddles two ridges; placed with the older half."],
+[1948,"desc","“Geography is the study of places away-to-hell-and-gone-away,” so goes a student definition of the subject.","A student, as McCune reports","mcc",OLD2+" Also filed under the preceding article, Shaw's “Fertilization: Route to a New Continent.”"],
+[1949,"space","One may start by defining geography as a study of distributions, a description and explanation of things on the earth's surface.","","bel",OLD9+" Also filed under the preceding article, Olmstead's “Suggestions for Geography in Wisconsin Schools.”"],
+[1949,"rel","Geography simply defined is a study of the relationships between earth and man.","","ost",OLD9],
+[1949,"space","Geography has been defined as “that science which consists of a systematic description and interpretation of the distribution of things on the surface of the earth.”","Quoted by Osterhart","ost",OLD9],
+[1949,"adj","The authors of this book hold that geography is primarily human ecology, and they define it as the study of human society in relation to the earth background.","White and Renner's Human Geography, quoted in a notice","e49",OLD9+" Also filed under Barton's “Geographical Publications,” which follows."],
+[1949,"rel","Modern geography deals with the inter-relation of man and environment.","A textbook under review","hdg",OLD2+" Filed three times, under three neighbouring items."],
+[1949,"open","We need not attempt here to define geography formally … Such matters we may well leave, for the moment, to Richard Hartshorne and his friends.","","kim",OLD2],
+[1949,"space","Geography is the study of landscape.","","kim",OLD2],
+[1949,"rel","Geography is the study of relationships, development, and change.","","kim",OLD2],
+[1950,"space","Today there is accepted by many geographers the idea that geography is concerned with the study, description, analysis and explanation of an area, whether that area be the world as a whole, or provinces, regions, or districts.","","lft",OLD9+" The same page records that “some people even refer to geography as the hole in the doughnut.”"],
+[1950,"open","It is difficult for professional geographers to define the outer limits of their discipline, and in grade school certainly no time should be wasted in such an endeavor.","","dix",OLD9],
+[1950,"rel","Economic Geography deals with the inter-relationship between the physical environment and man's productive occupations.","","wan",OLD2],
+[1950,"space","Geography is the study of the regions of the earth's surface.","","alx",OLD2],
+[1951,"adj","Soon thereafter Harlan H. Barrows of the University of Chicago defined geography as human ecology.","Harlan Barrows (1923), as Freeman reports him","fre",OLD9],
+[1951,"whole","The most unique and important contribution of geography is that of tying together various sciences and other subjects — the unifying principle being that of their human relationships.","","fre",OLD3],
+[1952,"home","Geography is concerned with people—where they live, how and why they live there.","A Rand McNally advertisement","a52",OLD9],
+[1952,"open","Stating a definition of resource-use education is as difficult and unprofitable as defining geography.","","bk2",OLD9],
+[1952,"desc","Physical geography was defined as “simply the descriptive study of a number of earth sciences which give us a general insight into the nature of man's environment.”","A new college textbook, which van Riper goes on to protest","vrp",OLD3+" Also filed under the preceding article, Rostlund's “The Persistent Planetary-Wind Diagram.”"],
+[1952,"space","… our definition of geography as the descriptive and interpretive study of areal differences …","","vrp",OLD3],
+[1953,"rel","Economic Geography is that branch of geographic endeavor which probes the distribution of, and relations between, the earth resources and the occupations by which man maintains himself.","","mxf",OLD3],
+[1953,"open","One of the difficulties facing the student entering the field of geography is the scarcity of acceptable definitions and the inadequacy of those existent, along with the lack of unanimity of opinion and purpose among geographers.","","mxf",OLD3],
+[1953,"rel","Geography is “the study of human society in relation to the earth background.”","White and Renner, quoted by Griffin","gri",OLD3],
+[1953,"rel","Geography is the science which studies the reciprocal relationships between mankind and its earth environment.","A textbook quoted by Griffin","gri",OLD3],
+[1953,"adj","Geography is a body of organized facts related to definite places and concerned with the adjustments between population groups and the areas where they live.","A textbook quoted by Griffin","gri",OLD3],
+[1953,"rel","Geography is the study of the earth and its relationship to man and his activities.","A textbook quoted by Griffin","gri",OLD3],
+[1953,"space","… the science which describes and maps the phenomena of the earth's surface for the purpose of discovering how the distribution of one set of phenomena is related to that of others.","A textbook quoted by Griffin","gri",OLD3],
+[1953,"space","Geography has been defined as “the science of space in relation to the earth.” Whether geography is all that is debatable, but at least that is all geography.","","wts",OLD3],
+[1953,"space","If then, as physical geographers are prone to say, geography is the study of the landscape, it must, for that reason, be the study of man.","","wts",OLD3],
+[1953,"rel","Geography, as the term is used in a broad sense, in the curriculum of the elementary grades deals with the relation of man and his environment.","","slc",OLD3+" Also filed under the preceding article, Doerr's “The Salt Industry of Southwestern Puerto Rico.”"],
+[1953,"space","Geography is the study of places and areas and the relations among them, and we learn these things by studying places and areas.","","hts",OLD3],
+[1954,"space","This geography observes and records the facts of area differentiation on the earth, but goes further in seeking the causes and consequences of both physical and cultural processes.","A publisher's advertisement for a college text","a54",OLD9],
+[1954,"open","This is our opportunity to raise the perennial question: “What is Geography?” and to introduce the students to the many definitions which have been attempted.","A college seminar syllabus","stm",OLD9],
+[1954,"adj","Human geography has been defined as the science which deals with the adaptation, in the widest sense, of human groups to their natural environment.","","gel",OLD3],
+[1954,"space","Geography is the strategy of men, space and resources in a world of motion.","","hof",OLD3],
+[1954,"space","Human Geography is the Study of the Earth's Surface [as] Modified by Man the Inhabitant.","The masthead of J. B. Jackson's magazine Landscape","g54",OLD3],
+[1955,"open","School geography has changed from a descriptive study to a physical science to a social science in less than one hundred years in this country. The major problem no longer is one of defining the nature of school geography.","","ken",OLD9],
+[1955,"rel","The very nature of geography, treating as it does with earth, man and the multiplicity of human activities as related to the environment, places a student of the field in position to view the world panorama.","","brw",OLD9],
+[1956,"space","History is the study of events or processes over time while geography is the study of events or processes in area.","","mcn",OLD4],
+[1957,"whole","Modern Geography then is partly physical and partly a social science, for it seeks to relate facts of the natural environment to facts and problems of the socio-economic environment.","","egj",OLD9],
+[1957,"whole","Geography is usually defined as the science dealing with the earth and its life — but that gives too static an implication. Geography is a dynamic science dealing with the unique synthesis of the whole world in continuous evolution.","","koe",OLD4+" Also filed under the preceding article, Eiselen's “Financial Aid for a Geographic Education.”"],
+[1957,"rel","Geography deals with rapidly developing and diverse societies in relation to an earth of which there is ever-expanding knowledge.","","koe",OLD4],
+[1957,"space","If geography is, as many believe, simply the locating of where historical events took place, there can be no objection …","A view Scott sets up in order to reject","sct",OLD4],
+[1957,"rel","But if geography is man's relationship to his total environment, it cannot be adapted to an historical organization of subject matter.","","sct",OLD4],
+[1957,"space","Geography is the science of place, its attributes and their relationships.","W. Elmer Ekblaw, quoted by Lemaire","lem",OLD4+" Also filed under the preceding article, Field's “The Stock Companies of Southwestern Australia.”"],
+[1957,"desc","Geography has been defined as “the science of the description of the earth in its external aspects, dealing with its form and movements, physical features, climate and products, inhabitants, and natural and political divisions.”","A dictionary definition, quoted by Jackson","egj",OLD4],
+[1957,"rel","In recent years the definition of geography and geographic content have been broadened to include a wider emphasis upon the obvious relationship between man and his environment.","","egj",OLD4],
+[1958,"home","The function of geography in school is to train future citizens to imagine accurately the conditions of the great world stage so that they may think sensibly about political and social problems in the world.","James Fairgrieve, quoted by Roberts","rhr",OLD9],
+[1958,"space","The study of the spatial organization of earth phenomena with an attempt to explain the development of this organization and to interpret its significance to man.","Taylor's own definition, given in a footnote","tay",OLD9],
+[1958,"rel","… geography deals with man's relation to all of the elements of his natural environment.","An advertisement for a college textbook by Renner and Novak","a58",OLD4],
+[1958,"desc","In 1845 geography was defined as “a Description of the Earth.”","Sidney E. Morse, 1845, quoted by Warman","wrm",OLD4],
+[1959,"adj","This text is organized around the principle that geography is primarily human ecology—the study of human society in relation to the earth environment.","An advertisement for White and Renner's Essentials of College Geography","a59",OLD9],
+[1959,"whole","Geography, therefore, is above all the great integrating core of the content side of any school curriculum.","","s59",OLD9],
+[1959,"rel","Geography is concerned with the thoughtful discussion and investigation of the relationship between men and their environment all over the world at the present time.","","s59",OLD9],
+[1959,"open","The ideas set forth in this paper are not to be construed as a definition of the discipline of geography; nor should it be inferred that the study of geography is confined to the spatial dimensions of human activities.","Kohn's footnote","kon",OLD9+" Also filed under the preceding article, Scarfe's “Geography Across the Curriculum.”"],
+[1959,"desc","That geography is essentially an observation science is irrefutable. Geographers are “seers” of the environment.","","boo",OLD9+" Also filed under the preceding article, Mewha's “Six Dates—Six Geographies.”"],
+[1959,"rel","… wed to the idea that geography is the study of man's relation to the natural environment … Isn't it high time to drop this myth which has persisted in the public schools long after it has been abandoned by college faculties?","A book reviewer, objecting","b59",OLD4],
+[1960,"rel","Geography is a study of relationships among the environmental factors.","","hig",OLD9],
+[1960,"whole","Geography is truly the bridge between natural and social science.","","hig",OLD9],
+[1961,"open","It is somewhat sad to ask mature students a simple question like, What is Geography? Answers will include man-land relationships, a study of the earth, of water, of rocks, of trees, of nature, of people, of latitude, of rivers … and what have you.","","abw",OLD9+" Also filed under the preceding article, Zelinsky's “The Population Prospect in Monsoon Asia.”"],
+[1961,"open","Most geographers are unable to correctly define the term general education; many cannot define geography.","","fus",OLD9+" Also filed under the preceding article, Switzer's “The Areal Analysis.”"],
+[1962,"rel","Most geographers agree that geography is a study of the description and interpretation of the nature-made and man-made environments with an emphasis placed on the interplay between the elements of each environment and between the two environments.","The NCGE sequences committee","hil",OLD9+" Also filed under the preceding article, Kennamer's “Visualization of Latitude and Longitude.”"],
+[1962,"space","Geography is concerned with the study of why a certain phenomenon, or group of phenomena in combination, whether physical, economic, or other, is located where it is or distributed as it is on the earth.","Chardon's working definition","chd",OLD9],
+[1962,"space","Geography is concerned with the problem of the uneven distribution of population over the earth.","David Hooson, quoted by Tomkins","tom",OLD9],
+[1962,"rel","It is clear that the answers are not to be found within the framework of a definition of geography as the study of man-nature relationships per se.","A definition Chardon finds inadequate","chd",OLD5],
+[1962,"space","Similar difficulties have been encountered when attempts are made to define geography as the study of regions or land occupance per se.","A definition Chardon finds inadequate","chd",OLD5],
+[1963,"space","Just as history deals with the sequence of human affairs in time, so geography deals with man, plus his environment, in his distribution through space.","Floyd's gloss on “many methodological geographers,” opening a two-page gallery of definitions","fly",OLD8],
+[1963,"space","Geography is the science of places, concerned with the qualities and potentialities of countries.","Paul Vidal de la Blache, in Floyd's gallery","fly",OLD8],
+[1963,"space","Geography tells what is where, why and what of it.","Isaiah Bowman, in Floyd's gallery","fly",OLD8],
+[1963,"open","Geography is what I like.","Anonymous, in Floyd's gallery","fly",OLD8],
+[1963,"rel","Geography tells why man does what he does where he does it.","Anonymous, in Floyd's gallery","fly",OLD8],
+[1963,"space","Geography is the science that describes the earth's surface with particular reference to the differentiation and relationship of areas.","Glossary Committee of British Geographers, in Floyd's gallery","fly",OLD8],
+[1963,"space","The main concern of the geographer is with the distribution of man and his material works, and with the unravelling of the causes and consequences of inequalities in that distribution.","George H. T. Kimble, in Floyd's gallery","fly",OLD8],
+[1963,"space","Geography is the study of the areal differentiation of the earth surface, as shown in the character, arrangement, and inter-relations over the earth of elements such as climate, relief, soil, vegetation, population, land use, industries, or states.","American College Dictionary, in Floyd's gallery","fly",OLD8],
+[1963,"space","Geography is that field of learning in which the characteristics of particular places on the earth's surface are examined. It is concerned with the arrangement of things and with the association of things that distinguish one area from another.","Preston E. James, in Floyd's gallery","fly",OLD8],
+[1964,"space","Geography is the science of places, not of men.","Paul Vidal de la Blache, quoted by Scarfe","scf",OLD8],
+[1964,"space","Geography has never been a science of man but the science of the land of the earth's surface.","Carl Sauer, quoted by Scarfe","scf",OLD8],
+[1965,"space","“Geography is at once the art of regional descriptions and the science of spatial relations”; “The essence of geography is the study of spatial relations.”","Statements from a book under review","b65",OLD9],
+[1965,"space","Geography is concerned with spatial relationships. It analyzes the similarities and disparities of different places on the earth, and then asks the question “Why?”","","hel",OLD9],
+[1965,"desc","Modern geography then is not just a description of the earth. Geography is not the mere accumulation of facts about an area of the world. Geography is not a series of memorized locations on a map.","","mor",OLD9],
+[1965,"rel","“The visitor is impressed by the notion of the struggle between man and nature, nature by which man has been formed and which, in his turn, he has transformed.” There are less meaningful definitions of the discipline of geography in current collegiate-level textbooks.","The Swiss National Exhibition, as Merriam reports it","mrm",OLD9],
+[1966,"home","To understand why geography is studied, we must know what geography is. Stated simply, geography is the study of the earth as the home of man.","","hws",OLD9],
+[1966,"desc","Misconceptions as to the nature of this discipline are the following: a) Geography consists of a collection of locations and descriptions only. b) The term “geographic” refers to physical features of the earth's surface only.","","con",OLD9],
+[1966,"open","Perhaps the most general, although surely the least satisfactory, definition of geography is, “Geography is what geographers do.”","","grn",OLD9],
+[1966,"desc","Many leave such courses with the unfortunate notion that geography is nothing more than an accumulation of facts about places.","","nel",OLD9],
+[1966,"space","Geography is concerned to provide accurate, orderly, and rational description and interpretation of the variable character of the earth surface.","Richard Hartshorne, Perspective on the Nature of Geography (1959), quoted by Brown","rhb",OLD9],
+[1966,"whole","Geography is concerned with systems. Indeed, we may now state its overriding problem. It is nothing less than an understanding of the vast, interacting system comprising all humanity and its natural environment on the surface of the earth.","Edward Ackerman (1963), quoted by Brown","rhb",OLD9],
+[1966,"space","Geography is the science of regional process patterns of dynamic spatial relations.","Robert S. Platt (1957), quoted by Brown","rhb",OLD9],
+[1967,"space","Geography deals with areal arrangement. Its principal orientation is toward the earth's surface and the varying distributional patterns of physical and cultural features.","A committee statement on the scope of geographic study","kar",OLD9],
+[1967,"rel","Geography is also sometimes mistakenly defined as the study of environmental relations. All geographic patterns are assumed to be explained by the distribution and character of some physical features.","Steinhauser, rejecting it","stn",OLD9],
+[1967,"space","The author defines geography for the layman as an “awareness concerning geodiversity.”","John K. Wright, as a reviewer reports him","b67",OLD9],
+[1967,"rel","Geography is that particular view of knowledge which focuses on man-physical environment relationships within their spatial (regional) framework.","","wht",OLD9],
+[1968,"space","Geography is a point of view expressed by the word “spatial” or, more specifically, by the phrase “earth-spatial distributions,” and geography can be defined in terms of “patterns” and “processes.”","","nos",OLD9],
+[1969,"home","It is in essence the study of the earth's surface as the home of man; or, in more modern terminology, of man's ecosystem.","","pj9",OLD9],
+[1970,"space","Any spatial phenomena can be encompassed within three geographic elements: place, route, and boundary. Geography is defined sequentially and developed as a systematic way of viewing human activities on the earth.","","stb",OLD9],
+[1970,"open","In the library of the College in which the present writer lectures, there are 47 printed definitions of geography! Can any two geographers agree on the definition of geography which each one, when asked separately, would give?","","now",OLD9],
+[1970,"whole","Geography might well be defined as the science of areal connectivity, rather than the study of areal differentiation.","","jmr",OLD9],
+[1970,"space","Although geography deals with the spatial configuration of the earth's surface, it is commonly taught with abstractions.","","dls",OLD9],
+[1970,"desc","Mackinder simply said, “Geology is the study of the past in the light of the present, while geography is the study of the present in the light of the past.” (As editor I consider it my duty to urge you not to burden either subject with this definition.)","A reader's question, answered by the editor","twk",OLD9],
+[1970,"space","Geography concerns itself with the significant attributes of places, the most significant being two-legged creatures who are endowed with the power of volition.","","wpt",OLD9],
+[1971,"open","If in any way it can help to demolish the ingrained conception of a simplistic geography. We in the profession are in reasonable agreement concerning the nature of modern geography and its scholarly objectives. Changing the name of our subject contributes nothing to a change in the goal.","Floyd, on renaming the field “geonomics”","fl1",NEW],
+[1971,"open","Having been initially schooled in another discipline, this reviewer is constantly amazed at the persistent and continual attempts to define geography. Whether these attempts arise from an inferiority complex or a deep malaise is not known.","A reviewer of two books on the nature of geography","bb1",NEW],
+[1971,"open","Having heard for so long that geography is not defined by its subject matter but by how it looks at things, we want to bring geography to the service of the major social issues of today.","","gji",NEW],
+[1971,"open","Geography, whether it is defined as an environmental-ecological or spatial science, is one of the most relevant social sciences.","","mji",NEW],
+[1972,"desc","Geography was still defined by most as physical geography. Textbooks in 1890 were still based on “sailor geography” and were “nothing but compilations of miscellaneous geographic information.”","Whittemore, on the Journal's founding years","whm",NEW],
+[1972,"open","Such a statement would have been easier to produce if the Task Force had available a commonly accepted definition of geography. The matrix is suggested as an alternative to yet another effort to reach a commonly accepted definition.","An NCGE research task force","eli",NEW],
+[1972,"space","A belief in a timeless, immaterial space makes it possible for some geographers to imagine that the statement “Geography is the science of space” has roughly the same meaning as “geology is the science of rocks.”","Eliot, doubting it","eli",NEW],
+[1972,"space","After all, the old truth is that geography is the science of space in its coordination of physical and human factors.","A panel of geographers in government and industry, as a correspondent reports","gf2",NEW],
+[1972,"open","The umbrella definitions used are: earth writing, man/land relationships, areal differentiation, spatial interrelationships, spatial dynamics, and spatial organization. The series of lectures is concluded with a working definition: geography is the discipline that studies the natural and cultural environments.","Mitchell's introductory course","mcl",NEW],
+[1973,"space","“Associations of phenomena that give character to particular places, and the likenesses and differences among places.” This definition of geography, frequently referred to as areal differentiation, has a lengthy legacy. As an all-inclusive definition it failed in a number of ways.","American Geography: Inventory and Prospect (1954), quoted and weighed by Walter and Bernard","wb3",NEW],
+[1974,"adj","Davis defined geography as an explanatory description of the physical character of an area followed by a description of the human response to these conditions.","William Morris Davis, as Preston James recalls him","pji",NEW],
+[1974,"space","No matter how a geographer defines his field of specialization, the distinctive mark of a geographer is a concern with the significance of location on the face of the earth.","","pji",NEW],
+[1975,"desc","This in no way defines geography as a field devoted exclusively to the description of the unique conditions of particular places. The formulation of conceptual models of observed and repeated sequences of events is essential.","James, rejecting it","pj5",NEW],
+[1975,"home","The definition of geography as the study of man and the realities of his socioeconomic milieu is the thesis on which this course in urban geography is based.","Michael Eliot Hurst's course, in an ERIC abstract","haf",NEW],
+[1975,"desc","The traditional perception which many students have of geography as a dull collection of facts and figures about places can and should be corrected.","","aug",NEW],
+[1976,"rel","Geography has often been defined as the science which is concerned with the interrelationships which exist between earth and man.","","gbi",NEW],
+[1976,"space","To all the learned world the “geographic method” is known as the study of the localization and extension of terrestrial phenomena.","","sau",NEW],
+[1976,"infl","According to the textbooks, geography is the study of how the earth influences man and how man influences the earth. In a text published in 1916, the first section heading is entitled “The Earth Shapes Man's Ways of Living.”","Jackson, on high school texts still in use","rhj",NEW],
+[1976,"open","Declining interest in precollegiate geography may be related to attempts of professional geographers to define geography so narrowly that curriculum builders are given a restrictive and distorted image of the scope of geography.","Harvey Heiges, in a conference abstract","ncp",NEW],
+[1976,"space","Geology is rocks, botany is plants, history is time, sociology is people, and geography is place. Many geographers still believe that the characteristic that defines geography is its prime concern with particular areas.","","jlr",NEW],
+[1976,"space","A definition of geography as “the science of distributions” is not very helpful. Other disciplines are interested in the distribution of, for example, rocks, plants, and ethnic groups.","Robinson, rejecting it","jlr",NEW],
+[1978,"space","Three fundamental organizational concepts: spatial location, spatial distribution, and spatial relation. This does not result in a definition of geography solely in terms of the locations of places, but to ignore these concepts is to fail to undertake geographic study.","","mci",NEW+" Also filed under the following article, Catling's “The Child's Spatial Conception.”"],
+[1978,"space","One needs a new definition of geography. The subject must be seen as a group of methods for analyzing data that emphasize relative location as a clue to understanding complex human phenomena.","","lbb",NEW],
+[1979,"desc","Hart defines regional geography as the skillful description of areas and places, the highest form of the geographer's art.","John Fraser Hart, as Walter and Bain report him","wbn",NEW],
+[1979,"open","Drawing maps is what geography is all about. Geography is nothing more than memorizing the countries and their capital cities. Geography is the study of man's adapting to his physical environment. Geography's primary interest is explaining the location of things.","Statements put to Nebraska high school students in a survey of their image of geography","hbs",NEW],
+[1979,"space","The question, What is geography? has been asked many times. Noted scholars in the field, no matter how diverse their answers may appear, seem to agree that geography is a spatial study based upon locational phenomena.","","gbl",NEW+" Also filed under the following item, Richardson and Lougeay's “Italy and Switzerland.”"],
+[1981,"space","Geography is the study of places, not of men.","Vidal de la Blache's dictum, as printed in two methods books under review","b81",OLD8],
+[1981,"space","Among the 33 teachers and administrators with no geography background, 20 (61 percent) favored “the study of world regions” as the best definition of geography.","Weiss's survey of Northern Kentucky high schools; the same educators chose “the spatial distribution of phenomena” as the worst definition","wei",OLD8],
+[1981,"rel","The considerable support for the study of man-environment relationships as the best definition of geography was surprising.","Weiss's survey of Northern Kentucky high schools","wei",OLD8],
+[1982,"open","There is now no widely accepted definition of the discipline. Many are concerned because our discipline lacks cohesion and is in a state of anarchy. Others find this situation refreshing.","","koh",OLD9],
+[1982,"rel","Geography is the study of the discovery, description, and interpretation of man's relation to his natural environment.","The definition Kohn learned as an undergraduate","koh",OLD8],
+[1982,"whole","The important contribution of geography, then, is to pull together, to integrate, the components of the environmental-human complex in particular locations over the earth.","","hrp",OLD8],
+[1982,"rel","Geography deals with environmental processes as a means to the end of providing understanding of the ways humans use the environment of particular places within distinctive cultural milieus.","","hrp",OLD8],
+[1982,"whole","The one unique attribute of geography is that it is an integrated discipline.","","lig",OLD8],
+[1983,"open","The apparent inability of geographers to define the structure of the discipline filters down to the training of teachers and the implementation of a geography curriculum.","A letter to the editor","l83",OLD9],
+[1983,"open","Nothing is more likely to bore young students than to start a geography class with abstract definitions, such as geography is the study of “areal differentiations” or “man-environment systems.”","Tuan, agreeing with his students","tua",OLD8],
+[1983,"desc","Social studies have gone back to the image that geography deals with place names and the facts found in gazetteers.","James, regretting it","pj3",OLD8],
+[1984,"open","Most of the time I agree with those who say that we should not spend time developing and debating definitions of geography, but rather get on with the task of doing good geography. After all, a field is best defined by its quality work.","","frd",OLD8],
+[1985,"open","Whether we define geography as human-environmental relations or spatial organization, our responsibility as teachers is to provide students with an understanding of the world.","","hr5",OLD9],
+[1985,"space","The scope and sweep of geography, which Bein defines as the study of spatial arrangements.","Frederick Bein, in a news item","etz",OLD9],
+[1985,"rel","Have we not always assumed that the very essence and soul of geography is the sense of place, the historically persistent, elemental, psychic, umbilical relationship between people and the earth?","","eyr",OLD8],
+[1986,"desc","Junior-grade geography texts exclude social issues and concentrate on superficial descriptions of clothing, food, shelter, and transportation. This definition of geography leaves little room for the exploration of contemporary problems.","Massey, on the textbook he helped write","mas",OLD8],
+[1987,"open","Geography cannot, and should not, be defined or classed within the academic structure according to its subject matter.","","tus",OLD9],
+[1987,"space","The core of geography is defined, by its unique nature as a chorological science, as the study of phenomena and processes interrelated with terrestrial space or areas upon the surface of the earth.","","tus",OLD8],
+[1988,"space","One traditional definition of a geographical perspective involves the questions of who and what are where, why they are there and so what.","","lib",OLD9],
+[1988,"open","“Geography is nothing more than a theoretical ideology based on technical practice alone.” His desire is for geography to be de-defined.","M. E. Eliot Hurst, as a reviewer reports him","r88",OLD9],
+[1988,"open","Modern geography deals with five major themes or topics.","A textbook author; the reviewer calls the implication that this defines geography inaccurate","b88",OLD8],
+[1989,"open","Geography has essentially been defined by a variety of subject matters rather than by a single subject matter, and this is an unfortunate state of affairs.","","nor",OLD9],
+[1990,"desc","The pupil and his parents feel that geography is simply the acquirement of a miscellany of facts about places and peoples with no significant trend in the whole study.","O. D. Von Engeln, 1919 article reprinted in the Journal's 1990 anniversary issue","ve9",OLD9],
+[1990,"space","Understanding the world today, and the centripetal and centrifugal forces that bind its various regions together and tear them apart.","Robert Harper's definition, as quoted back at him by the authors of the five-themes Guidelines","c9a",OLD8],
+[1990,"open","Perhaps geography might be described as “Four Traditions, Five Themes, and a Bag of Techniques.”","A reader, in the exchange over the five themes","c9b",OLD8],
+[1990,"space","Geography is the study of places and areas and the relations among them, and we learn these things by studying places and areas.","Richard Hartshorne, 1953 address reprinted in the Journal's 1990 anniversary issue","hs9",OLD8],
+[1990,"infl","Geography is the study of the land and its effect upon its people; history is the study of a people in whose economic, social, and political development the land is an essential and potent factor.","Ellen Churchill Semple, 1904 article reprinted in the Journal's 1990 anniversary issue","sm9",OLD8],
+[1992,"desc","Students come away from their school experience thinking that geography is essentially being able to play target practice on a map.","","mrn",OLD9],
+[1992,"space","Its purpose was to move geography away from the regional orientation which, then as now, generally defines the subject in the schools.","Marran, on the High School Geography Project","mrn",OLD9],
+[1992,"home","One of the most popular definitions of human geography runs something like the study of the earth's surface as inhabited by humans.","","nr2",OLD9],
+[1992,"space","The raison d'être of geography is that the earth environment and the peoples that inhabit it vary from place to place.","","hr2",OLD8],
+[1992,"space","Geography is the study of the spatial patterns of phenomena on the earth's surface and of the processes that lead to their creation.","Hemmasi's working definition","hem",OLD8],
+[1993,"rel","Geography is defined in traditional terms: how people interact with their planet or the study of humans in relation to their environment.","A book under review","r93",OLD7],
+[1994,"desc","… “a science that deals with the earth and its life.”","Richard Boehm's booklet Careers in Geography (1990), quoted by Jacobson","jac",OLD7],
+[1995,"space","Geography is the science of space and place on Earth's surface.","The claim of the National Geography Standards, as Hantula reports it","hnt",OLD7],
+[1995,"open","Geography has no definition other than what geographers do.","The answer Archer gets from his students and non-geography colleagues","arc",OLD7],
+[1995,"rel","Geography is the study of variations in the human-environment relationship over the earth's surface.","","arc",OLD7],
+[1995,"desc","“Interactions of cultures, economic activities, and politics” are not in Webster's definition of geography; these don't have anything to do with the science of the earth.","A member of the public commenting on Alaska's draft standards, quoted by Marcello","mrc",OLD7],
+[1996,"whole","Geography is “an integrative discipline that brings together the physical and human dimensions of the world in the study of people, places, and environments.”","Geography for Life: National Geography Standards (1994), quoted by Kimmel","kml",OLD9],
+[1996,"open","What is geography? Geography is many different things to many different people.","","mra",OLD9],
+[1996,"space","Geography can be defined as the discipline that utilizes the spatial approach to the understanding …","","fe1",OLD7+" The passage is cut off mid-sentence in the file."],
+[1996,"space","Geography is the study of spatial distributions and space relations on the Earth's surface.","The National Research Council's The Science of Geography (1965), quoted by Fernald","fe1",OLD7],
+[1996,"space","Geography is the study of people, places, and environments from a spatial perspective.","Geography for Life: National Geography Standards (1994), quoted by Fernald","fe1",OLD7],
+[1996,"space","It is necessary to constantly remember and to guide students toward the fact that geography deals with space.","","her",OLD7],
+[1997,"space","Geography is the science which seeks to explain the character of places and the distribution of people, features and events as they occur and develop over the surface of the Earth.","The International Charter on Geographical Education (IGU, 1992), reprinted in the Journal; the 2013 entry quotes the same words via Haubrich","chr",OLD7],
+[1999,"desc","When responding to the question “What is geography?” one fifth grader said, “It's memorizing the states and capitals.”","A fifth grader, quoted by Keiper","kei",OLD9],
+[2000,"rel","The Oxford Dictionary of Geography defines human geography as the study of “relationships between [human] activities and the physical environment.”","","shm",OLD9],
+[2002,"open","My files contain nearly 200 definitions of geography gleaned from various geographic sources. They amply attest the fact that we are “all over the map” in defining what we, as geographers, do.","","grz",OLD9],
+[2002,"space","Geography is the study of what is where, why there, and why care?","Gritzner's “layman's definition,” built on Kant's contrast of history's When? with geography's Where?","grz",OLD7],
+[2002,"space","A stronger statement should have been made that geography is a methodologically defined subject. … The “spatial approach” is the study of phenomena by looking at their areal distribution and interaction.","","fe2",OLD7],
+[2004,"space","Geography is not defined by the study of a particular phenomenon. Rather, geography offers a methodology, a unique way of organizing and analyzing information pertaining to Earth's natural and cultural features in a spatial context.","","gmm",OLD9],
+[2004,"open","While we may not have one single definition of geography, we do have a working definition which sustains the discipline.","","mer",OLD7],
+[2004,"rel","Geography is the science of spatial relationships of humans and their environment. Geography encompasses the physical and human world by examining what is where, why it is there, and what we can make of it.","","lor",OLD7+" Could as easily sit on the spatial ridge; placed here for its human-environment noun."],
+[2005,"desc","Many geographers define their discipline in terms of the scale at which they claim it operates. This is consistent with the original meaning of the word geography, in that it is a science that deals with the earth's surface and its proximate atmosphere.","","gol",OLD9],
+[2006,"space","… “the study of what is where, why, and so what?”","“A popular shorthand definition,” as Alfred and Maier call it","alf",OLD6],
+[2007,"home","… write of the same thing: people, and their lives in certain times and places.","Weber, 2005, on what the geographer, the poet and the dramatist share, quoted by Kirman","kir",OLD6],
+[2008,"space","Geography is fundamentally the study of place and interaction in the way that history is the study of time and events.","Gregg and Leinhardt (1994), quoted by Sekeres and Gregg","sek",OLD9],
+[2008,"space","Geography, sometimes defined as the science of space and place, with its range of vision over earth science and human affairs, bridges the gap between the sciences and the humanities.","","fuh",OLD9],
+[2009,"space","Students come to understand that geography is concerned with place; that understanding the nature and causes of spatial differentiation on the global surface has been the geographer's task since people first noticed differences between places.","The IB Diploma syllabus, as Semple and Dawson describe it","ibg",OLD9],
+[2009,"whole","“Geography,” one student states, “seems to be the study of many disciplines all rolled into one.”","A student, quoted by Donaldson and Kuhlke","dnk",OLD9],
+[2010,"space","History deals with changes through time while geography deals with variations on Earth's surface.","","alm",OLD5],
+[2011,"whole","It is an integrative discipline that brings together the physical and human dimensions of the world in the study of people, places, and environments.","Geography for Life (1994), quoted by Schmidt","sch",OLD9],
+[2012,"space","Geography is the study of spatial relationships between phenomena on the Earth's surface.","","boe",OLD5],
+[2013,"whole","Geography is a science that connects human and natural daily realities in a globalizing world.","","bnt",OLD9],
+[2013,"open","Bonnett describes geography as “a fundamental fascination, as an exploration and about giving order and meaning to the world.”","Alastair Bonnett (2008), quoted by Bent and colleagues","bnt",OLD9],
+[2013,"rel","… “the study of the interrelationships between the physical and human components of Earth.”","A student after a field trip, quoted by Leydon and Turner","ley",OLD5],
+[2013,"desc","… learning about places and countries, world knowledge, and doing map work.","How primary pupils define geography, as Bent and colleagues summarise earlier studies","bnt",OLD5],
+[2013,"space","… “the science which seeks to explain the character of places and the distribution of people …”","Hartwig Haubrich, 1992, quoted by Bent and colleagues","bnt",OLD5],
+[2013,"space","Spectral geography can be defined as an examination of the essential spirit that inhabits a place.","","dan"],
+[2014,"open","Historians and geographers both define their disciplines more by perspective than by content.","","hrs",OLD9],
+[2014,"desc","… the study of topics such as landforms, mountains, plateaus and rivers around the world.","A Turkish primary student, quoted by Senyurt","sny",OLD5],
+[2014,"open","… to recognize explicitly several distinct research orientations …","Murphy, describing Pattison's answer to the efforts to define geography","mur",OLD5],
+[2014,"space","I believe that geography is the study of spatial aspects of human existence.","A survey statement written by Jo and Bednarz","jbd",OLD5],
+[2015,"space","… the study of the world, the diverse regions of the world, and their various characteristics …","","lry",OLD4],
+[2015,"rel","… “what the earth does to people and what people do to the earth.”","Lucy Sprague Mitchell, 1953, on human geography, quoted by Downs","dow",OLD4],
+[2015,"space","… “the study of places (or areas or regions) and the unique synthesis of phenomena …”","Steinberg and colleagues, 2002, quoted by Korson and Kusek","kkk",OLD4],
+[2016,"space","Shorthand definitions of geography often include the study of spaces and places on Earth's surface, the why of where, and the study of the difference that space makes in human and biophysical processes.","","mph",OLD9],
+[2017,"desc","… “the study of the earth and its natural, physical and human environments.”","The International Charter on Geographical Education, quoted by Bourke and Lane","bkl",OLD3],
+[2017,"whole","… the subject that bridges the natural and social sciences.","The international charters, as Bourke and Lane summarise them","bkl",OLD3],
+[2018,"space","Geography is concerned with the “totality of places” and how seemingly disparate things fit together in the real world.","John Fraser Hart (1982), quoted by Larsen and Harrington","lh8",OLD9],
+[2018,"space","… the study of the spatial attributes of human and physical phenomena and their relations.","","dml",OLD3],
+[2021,"home","… the study of the Earth as the Home of Man — or, as we now say, of Humankind.","D. W. Meinig, 1992, quoted by Larsen and colleagues","lgh",OLD3],
+[2021,"space","Geography is the study of what is where and why.","A common saying, as Larsen and colleagues report","lgh",OLD3],
+[2023,"open","If geographers are engaged in a wide variety of studies, then what exactly is geography?","Jones, on the “eclectic pluralism” of American geography since the 1950s","jon",OLD9],
+[2023,"rel","… geography deals with complex human-environment relationships.","","bmh",OLD3],
+[2025,"open","Hong et al. distinguished seven orientations: globalists, earthists, interactionists, placeists, environmentalists, facilitators and synthesisers.","Teacher orientations to “What is geography?”, reported by Ai and colleagues","aix",OLD9],
+[2026,"open","… not to define geography in any singular way but to stimulate discussion and reflection.","","cal"]
+];
+const E = D.map((r,i)=>({i,y:r[0],s:SI[r[1]],q:r[2],by:r[3],src:R[r[4]],note:r[5]||"",isNew:String(r[5]||"").startsWith(NEW)}));
+
+/* ---------- state ---------- */
+const LAST = 2026, NMAIN = LAST-1902;     // one range, 1902..2026
+const STEPS = NMAIN+1;
+const yearOf = i => 1902+i;
+const stepOf = y => y-1902;
+let saved = (window.claude && window.claude.hot && window.claude.hot.data) || {};
+if (saved.v !== 11) saved = {};
+const firstNew = Math.max(0, E.findIndex(e=>e.isNew));
+const state = { sel: Number.isInteger(saved.sel)?saved.sel:firstNew, reveal: Number.isInteger(saved.reveal)?saved.reveal:STEPS-1, off: new Set(saved.off||[]) };
+if (window.claude && window.claude.hot && window.claude.hot.snapshot)
+  window.claude.hot.snapshot(()=>({v:11,sel:state.sel,reveal:state.reveal,off:[...state.off]}));
+
+const $ = id => document.getElementById(id);
+const counts = SCHOOLS.map((_,i)=>E.filter(e=>e.s===i).length);
+
+/* ---------- lede with real numbers ---------- */
+(function(){
+  const top = counts.indexOf(Math.max(...counts));
+  $("lede").innerHTML = `<b>${E.length} definitions</b> of geography printed in the <b>Journal of Geography</b>, raised into a block diagram. Each ridge is one way of answering the question, and it stands tall where that answer was given often. “${SCHOOLS[top].n}” is the longest range, with ${counts[top]}. Every pin is one definition you can read; the ${E.filter(e=>e.isNew).length} ringed in white were added in the latest update, which fills the 1970s, the last empty stretch.`;
+})();
+
+/* ---------- reading panel ---------- */
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function showEntry(){
+  const e = E[state.sel], sc = SCHOOLS[e.s];
+  const aside = document.querySelector("aside");
+  aside.style.setProperty("--c", sc.c);
+  $("p-sch").innerHTML = `<span class="sw"></span>${esc(sc.n)}`;
+  $("p-yr").textContent = e.y;
+  $("p-desc").textContent = sc.d;
+  $("p-q").textContent = "“" + e.q.replace(/“/g,"‘").replace(/”/g,"’") + "”";
+  $("p-by").innerHTML = e.by ? `<span class="k">Whose words</span>${esc(e.by)}` : "";
+  $("p-by").style.display = e.by ? "" : "none";
+  const [a,t,v,doi] = e.src;
+  $("p-src").innerHTML = `<span class="k">Filed in the CSV under</span>${esc(a)}, “${esc(t)},” <i>Journal of Geography</i> ${esc(v)} (${e.y}). <a href="https://doi.org/10.1080/${doi}" target="_blank" rel="noopener">Open the article</a>`;
+  $("p-note").textContent = e.note;
+  $("p-note").style.display = e.note ? "" : "none";
+  $("p-n").textContent = `${state.sel+1} of ${E.length}`;
+}
+function visible(e){ return !state.off.has(e.s) && stepOf(e.y) <= state.reveal; }
+function select(i, fromPlay){
+  state.sel = (i+E.length)%E.length;
+  const e = E[state.sel];
+  if (!fromPlay){
+    if (state.off.has(e.s)){ state.off.delete(e.s); syncChips(); }
+    if (stepOf(e.y) > state.reveal){ setReveal(stepOf(e.y)); }
+  }
+  showEntry(); scene3d && scene3d.refresh();
+}
+function step(dir){
+  let i = state.sel;
+  for (let k=0;k<E.length;k++){ i=(i+dir+E.length)%E.length; if(!state.off.has(E[i].s)) break; }
+  select(i);
+}
+$("prev").onclick = ()=>step(-1);
+$("next").onclick = ()=>step(1);
+document.addEventListener("keydown",ev=>{
+  if (ev.target.tagName==="INPUT") return;
+  if (ev.key==="ArrowLeft"){step(-1);} else if (ev.key==="ArrowRight"){step(1);}
+});
+
+/* ---------- chips ---------- */
+const chipEls = [];
+SCHOOLS.forEach((s,i)=>{
+  const b = document.createElement("button");
+  b.type="button"; b.className="chip"; b.style.setProperty("--c",s.c);
+  b.innerHTML = `<span class="sw"></span>${esc(s.n)} <span class="ct">${counts[i]}</span>`;
+  b.onclick = ()=>{ state.off.has(i)?state.off.delete(i):state.off.add(i); syncChips(); scene3d&&scene3d.refresh(); };
+  $("chips").appendChild(b); chipEls.push(b);
+});
+function syncChips(){ chipEls.forEach((b,i)=>b.setAttribute("aria-pressed", state.off.has(i)?"false":"true")); }
+syncChips();
+
+/* ---------- time ---------- */
+let playing = null;
+function setReveal(v){
+  state.reveal = v; $("reveal").value = v; $("yr").textContent = yearOf(v);
+  scene3d && scene3d.rebuild();
+}
+function stopPlay(){ if(playing){clearInterval(playing);playing=null;} $("play").textContent = "Build from 1902"; }
+$("reveal").addEventListener("input",ev=>{ stopPlay(); setReveal(+ev.target.value); });
+$("play").onclick = ()=>{
+  if (playing){ stopPlay(); return; }
+  setReveal(0); $("play").textContent = "Pause";
+  const tick = ()=>{
+    const first = E.findIndex(e=>stepOf(e.y)===state.reveal && !state.off.has(e.s));
+    if (first>=0) select(first,true);
+  };
+  tick();
+  playing = setInterval(()=>{
+    if (state.reveal>=STEPS-1){ stopPlay(); return; }
+    setReveal(state.reveal+1); tick();
+  }, 320);
+};
+$("yr").textContent = yearOf(state.reveal); $("reveal").value = state.reveal;
+
+/* ---------- 3D ---------- */
+let scene3d = null;
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function start3d(){
+  const stage = $("stage"), tip = $("tip");
+  const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  stage.insertBefore(renderer.domElement, stage.firstChild);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 200);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.62));
+  const sun = new THREE.DirectionalLight(0xfff2dc, 0.75); sun.position.set(-8, 14, 10); scene.add(sun);
+
+  const KX = 0.24, ROW = 1.55, THICK = 0.95, HS = 0.55, BASE = 0.1, SIG = 1.1;
+  const NR = SCHOOLS.length;
+  const X = y => (y-1902)*KX;
+  const SEGS = [[1902,LAST]];
+  const rowZ = i => (NR-1-i)*ROW;              // row 0 sits nearest the viewer
+  const DEPTH = (NR-1)*ROW + THICK;
+  const yearsBy = SCHOOLS.map((_,i)=>E.filter(e=>e.s===i).map(e=>e.y));
+  function hAt(s, year, upTo){
+    let v = 0; const ys = yearsBy[s];
+    for (let k=0;k<ys.length;k++){ if (ys[k] > upTo) continue; const d=(year-ys[k])/SIG; v += Math.exp(-0.5*d*d); }
+    return BASE + HS*v;
+  }
+  const islandH = dx => BASE + HS*1.25*Math.exp(-0.5*(dx/0.3)*(dx/0.3));
+
+  /* ground plates */
+  const plateMat = new THREE.MeshLambertMaterial({color:0x1a2c45});
+  function plate(x0,x1){
+    const g = new THREE.BoxGeometry(x1-x0, 0.16, DEPTH+1.4);
+    const m = new THREE.Mesh(g, plateMat); m.position.set((x0+x1)/2, -0.08, DEPTH/2); scene.add(m);
+  }
+  SEGS.forEach(g=>plate(X(g[0])-0.9, X(g[1])+0.9));
+  /* five-year graticule on the plate */
+  (function(){
+    const pts=[];
+    for (let y=1905;y<=2025;y+=5){ pts.push(new THREE.Vector3(X(y),0.005,-0.7), new THREE.Vector3(X(y),0.005,DEPTH+0.7)); }
+    const g = new THREE.BufferGeometry().setFromPoints(pts);
+    scene.add(new THREE.LineSegments(g, new THREE.LineBasicMaterial({color:0x34507a})));
+  })();
+
+  /* ridges */
+  const ridges = SCHOOLS.map((s,i)=>{
+    const col = new THREE.Color(s.c);
+    const wall = new THREE.MeshLambertMaterial({color:col.clone().multiplyScalar(0.62), transparent:true});
+    const top  = new THREE.MeshLambertMaterial({color:col, transparent:true});
+    const crest = new THREE.LineBasicMaterial({color:col.clone().lerp(new THREE.Color(0xffffff),0.45), transparent:true});
+    const group = new THREE.Group(); group.position.z = rowZ(i); scene.add(group);
+    return {group, wall, top, crest, parts:[]};
+  });
+  function addProfile(r, pts){
+    const shape = new THREE.Shape();
+    shape.moveTo(pts[0][0], 0);
+    pts.forEach(p=>shape.lineTo(p[0], p[1]));
+    shape.lineTo(pts[pts.length-1][0], 0); shape.closePath();
+    const g = new THREE.ExtrudeGeometry(shape, {depth:THICK, bevelEnabled:false, curveSegments:1});
+    const m = new THREE.Mesh(g, [r.wall, r.top]); r.group.add(m); r.parts.push(m);
+    const lg = new THREE.BufferGeometry().setFromPoints(pts.map(p=>new THREE.Vector3(p[0],p[1]+0.004,THICK+0.004)));
+    const l = new THREE.Line(lg, r.crest); r.group.add(l); r.parts.push(l);
+  }
+  function rebuild(){
+    const upTo = yearOf(state.reveal);
+    ridges.forEach((r,i)=>{
+      r.parts.forEach(p=>{ r.group.remove(p); p.geometry.dispose(); }); r.parts.length=0;
+      SEGS.forEach(g=>{
+        if (upTo < g[0]) return;
+        const yEnd = Math.min(upTo, g[1]) + 1.1, pts=[];
+        for (let yr=g[0]-1.1; yr<yEnd; yr+=0.13) pts.push([X(yr), hAt(i, yr, upTo)]);
+        pts.push([X(yEnd), hAt(i, yEnd, upTo)]);
+        addProfile(r, pts);
+      });
+    });
+    refresh();
+  }
+
+  /* pins */
+  const headGeo = new THREE.SphereGeometry(0.13, 16, 12);
+  const pins = [];
+  const groupCount = {};
+  E.forEach(e=>{ const k=e.s+"|"+e.y; (groupCount[k]=groupCount[k]||[]).push(e.i); });
+  E.forEach(e=>{
+    const sib = groupCount[e.s+"|"+e.y], k = sib.indexOf(e.i), n = sib.length;
+    const col = new THREE.Color(SCHOOLS[e.s].c).lerp(new THREE.Color(0xffffff),0.35);
+    const head = new THREE.Mesh(headGeo, new THREE.MeshBasicMaterial({color:col}));
+    head.userData.e = e; head.userData.col = col;
+    const z = rowZ(e.s) + THICK*((k+0.5)/n);
+    const x = X(e.y) + (n>3 ? ((k%2)?0.07:-0.07) : 0);
+    const stemG = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0,1,0)]);
+    const stem = new THREE.Line(stemG, new THREE.LineBasicMaterial({color:col, transparent:true, opacity:0.75}));
+    scene.add(head); scene.add(stem);
+    pins.push({e, head, stem, x, z});
+  });
+  const ringGeo = new THREE.RingGeometry(0.2, 0.245, 28);
+  const rings = pins.filter(p=>p.e.isNew).map(p=>{
+    const m = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({color:0xffffff, side:THREE.DoubleSide, depthTest:false, transparent:true}));
+    m.renderOrder = 5; scene.add(m); return {m, p};
+  });
+  /* the pointer that marks the definition being read: a hot-pink arrow, light column and ground ring, all drawn over the terrain */
+  const HOT = 0xff4fa3;
+  const halo = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 14), new THREE.MeshBasicMaterial({color:HOT, transparent:true, opacity:0.35, depthWrite:false, depthTest:false}));
+  halo.renderOrder = 6; scene.add(halo);
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.11, 1, 10, 1, true), new THREE.MeshBasicMaterial({color:HOT, transparent:true, opacity:0.55, depthWrite:false, depthTest:false, side:THREE.DoubleSide}));
+  beam.renderOrder = 6; scene.add(beam);
+  const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.46, 1.05, 16), new THREE.MeshBasicMaterial({color:HOT, depthTest:false}));
+  arrow.rotation.x = Math.PI; arrow.renderOrder = 7; scene.add(arrow);
+  const arrowRim = new THREE.Mesh(new THREE.ConeGeometry(0.56, 1.24, 16), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.35, depthTest:false, side:THREE.BackSide}));
+  arrowRim.rotation.x = Math.PI; arrowRim.renderOrder = 6; scene.add(arrowRim);
+  const gring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.62, 40), new THREE.MeshBasicMaterial({color:HOT, transparent:true, opacity:0.8, depthTest:false, side:THREE.DoubleSide}));
+  gring.rotation.x = -Math.PI/2; gring.renderOrder = 6; scene.add(gring);
+  const mark = $("mark"); let selPin = null, selVis = false;
+
+  const ground0 = (si,y,upTo)=>hAt(si,y,upTo)+0.02;
+  let hovered = null;
+  function refresh(){
+    const upTo = yearOf(state.reveal);
+    ridges.forEach((r,i)=>{ const o = state.off.has(i) ? 0.1 : 1; r.wall.opacity=o; r.top.opacity=o; r.crest.opacity=o; r.wall.depthWrite=r.top.depthWrite=o===1; });
+    pins.forEach(p=>{
+      const e = p.e, vis = visible(e);
+      p.head.visible = p.stem.visible = vis;
+      const ground = hAt(e.s, e.y, upTo);
+      const y = ground + 0.42;
+      p.head.position.set(p.x, y, p.z);
+      p.stem.position.set(p.x, ground, p.z); p.stem.scale.set(1, y-ground, 1);
+      const isSel = e.i===state.sel, isHov = hovered===p;
+      p.head.scale.setScalar(isSel?1.7:(isHov?1.35:1));
+      p.head.material.color.copy(isSel ? new THREE.Color(0xffffff) : p.head.userData.col);
+      if (isSel){
+        selPin = p; selVis = vis;
+        halo.visible = beam.visible = arrow.visible = arrowRim.visible = gring.visible = vis;
+        halo.position.copy(p.head.position);
+        beam.position.set(p.x, y+1.6, p.z); beam.scale.set(1, 3.2, 1);
+        gring.position.set(p.x, ground0(e.s, e.y, upTo), p.z);
+        mark.textContent = e.y + " · " + SCHOOLS[e.s].n;
+      }
+    });
+  }
+
+  /* labels drawn as HTML so the type stays sharp */
+  const labels = [];
+  function label(text, cls, pos, color, anchor){
+    const el = document.createElement("div"); el.className = "lab "+cls; el.textContent = text;
+    if (color) el.style.color = color;
+    stage.appendChild(el); labels.push({el, pos, anchor:anchor||"c", school:cls==="school"});
+    return el;
+  }
+  SCHOOLS.forEach((s,i)=>{ const l = label(s.n, "school", new THREE.Vector3(-0.75, 0.12, rowZ(i)+THICK/2), s.c, "r"); l.dataset.i = i; });
+  [1902,1910,1920,1930,1940,1950,1960,1970,1980,1990,2000,2010,2020].forEach(y=>label(String(y), "year", new THREE.Vector3(X(y), 0, DEPTH+1.15)));
+
+  /* camera */
+  const home = {theta:0.2, phi:1.02, r:40, t:new THREE.Vector3(12.0, 0.9, DEPTH/2)};
+  const cam = {theta:home.theta, phi:home.phi, r:home.r, t:home.t.clone(), tGoal:home.t.clone(), rGoal:null, thGoal:null, phGoal:null};
+  let touched = false, t0 = performance.now();
+  /* scan mode: zoom in a little and glide along the time axis; any other interaction springs the view home */
+  const scan = {on:false, dir:0, x:home.t.x, last:0};
+  const SCAN_R = 23, SCAN_MIN = X(1902)+3.5, SCAN_MAX = X(LAST)-2.5;
+  function springHome(){
+    scan.on = false; scan.dir = 0; $("scan").classList.remove("on");
+    cam.rGoal = home.r; cam.thGoal = home.theta; cam.phGoal = home.phi; touched = false;
+    const p = pins[state.sel]; cam.tGoal.set(home.t.x*0.7 + (p?p.x:home.t.x)*0.3, home.t.y, home.t.z);
+  }
+  function scanStart(dir){
+    if (!scan.on){
+      scan.on = true; $("scan").classList.add("on");
+      const p = pins[state.sel];
+      scan.x = Math.max(SCAN_MIN, Math.min(SCAN_MAX, p ? p.x : cam.t.x));
+      cam.rGoal = SCAN_R; cam.thGoal = home.theta; cam.phGoal = home.phi + 0.1; touched = true;
+    }
+    scan.dir = dir; scan.last = performance.now();
+    scan.x = Math.max(SCAN_MIN, Math.min(SCAN_MAX, scan.x + dir*0.9));   // a tap nudges about four years
+    cam.tGoal.set(scan.x, home.t.y - 1.0, home.t.z);
+  }
+  function scanStop(){ scan.dir = 0; }
+  function scanTick(now){
+    if (!scan.on || !scan.dir) return;
+    const dt = Math.min(0.05, (now - scan.last)/1000); scan.last = now;
+    scan.x = Math.max(SCAN_MIN, Math.min(SCAN_MAX, scan.x + scan.dir*1.7*dt));   // held: about seven years a second
+    cam.tGoal.set(scan.x, home.t.y - 1.0, home.t.z);
+  }
+  [["scanL",-1],["scanR",1]].forEach(([id,dir])=>{
+    const b = $(id);
+    b.addEventListener("pointerdown", ev=>{ ev.stopPropagation(); ev.preventDefault(); b.setPointerCapture(ev.pointerId); scanStart(dir); });
+    ["pointerup","pointercancel","lostpointercapture"].forEach(t=>b.addEventListener(t, ev=>{ ev.stopPropagation(); scanStop(); }));
+    b.addEventListener("pointermove", ev=>ev.stopPropagation());
+    b.addEventListener("keydown", ev=>{ if (ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); ev.stopPropagation(); if(!ev.repeat) scanStart(dir); scan.dir = dir; scan.last = performance.now(); } });
+    b.addEventListener("keyup", ev=>{ if (ev.key==="Enter"||ev.key===" ") scanStop(); });
+    b.addEventListener("blur", scanStop);
+    b.addEventListener("click", ev=>ev.stopPropagation());
+  });
+  $("scanC").addEventListener("pointerdown", ev=>ev.stopPropagation());
+  $("scanC").addEventListener("click", ev=>{ ev.stopPropagation(); springHome(); });
+  $("scan").addEventListener("pointerdown", ev=>ev.stopPropagation());
+  $("scan").addEventListener("wheel", ev=>ev.stopPropagation());
+  function animCam(now){
+    scanTick(now);
+    if (cam.rGoal!==null){ cam.r += (cam.rGoal-cam.r)*0.07; if (Math.abs(cam.rGoal-cam.r)<0.05){ cam.r=cam.rGoal; cam.rGoal=null; } }
+    if (cam.thGoal!==null){ cam.theta += (cam.thGoal-cam.theta)*0.07; if (Math.abs(cam.thGoal-cam.theta)<0.002){ cam.theta=cam.thGoal; cam.thGoal=null; } }
+    if (cam.phGoal!==null){ cam.phi += (cam.phGoal-cam.phi)*0.07; if (Math.abs(cam.phGoal-cam.phi)<0.002){ cam.phi=cam.phGoal; cam.phGoal=null; } }
+  }
+  function placeCamera(now){
+    let th = cam.theta;
+    if (!touched && !reduceMotion) th += 0.07*Math.sin((now-t0)/4200);
+    cam.t.lerp(cam.tGoal, scan.on ? 0.1 : 0.06);
+    const sp = Math.sin(cam.phi);
+    camera.position.set(cam.t.x + cam.r*sp*Math.sin(th), cam.t.y + cam.r*Math.cos(cam.phi), cam.t.z + cam.r*sp*Math.cos(th));
+    camera.lookAt(cam.t);
+  }
+  function resize(){
+    const w = stage.clientWidth, h = stage.clientHeight; if(!w||!h) return;
+    renderer.setSize(w, h, false); camera.aspect = w/h;
+    camera.fov = w/h < 1.15 ? 50 : 36;
+    cam.rFit = w/h < 1.15 ? 1.2 : (w/h < 1.6 ? 1.12 : 1);
+    home.t.x = w/h < 1.15 ? 13.6 : 12.0;
+    camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(resize).observe(stage); resize();
+
+  /* pointer: turn, zoom, pick */
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  const ptrs = new Map(); let moved = 0, pinch = 0;
+  function pick(ev){
+    const b = stage.getBoundingClientRect();
+    ndc.set(((ev.clientX-b.left)/b.width)*2-1, -((ev.clientY-b.top)/b.height)*2+1);
+    ray.setFromCamera(ndc, camera);
+    let best=null, bd=0.34;                     // generous hit radius around each pin head
+    pins.forEach(p=>{ if(!p.head.visible) return; const d = ray.ray.distanceToPoint(p.head.position); if (d<bd){bd=d;best=p;} });
+    return best;
+  }
+  stage.addEventListener("pointerdown",ev=>{ stage.setPointerCapture(ev.pointerId); ptrs.set(ev.pointerId,{x:ev.clientX,y:ev.clientY}); moved=0; pinch=0; stage.classList.add("dragging"); });
+  stage.addEventListener("pointermove",ev=>{
+    const p = ptrs.get(ev.pointerId);
+    if (p){
+      const dx = ev.clientX-p.x, dy = ev.clientY-p.y; p.x=ev.clientX; p.y=ev.clientY; moved += Math.abs(dx)+Math.abs(dy);
+      if (ptrs.size===1){
+        if (moved>5){ touched=true; cam.thGoal=cam.phGoal=cam.rGoal=null; cam.theta -= dx*0.006; cam.phi = Math.max(0.25, Math.min(1.5, cam.phi - dy*0.005)); }
+      } else if (ptrs.size===2){
+        const [a,b] = [...ptrs.values()]; const d = Math.hypot(a.x-b.x,a.y-b.y);
+        if (pinch) cam.r = Math.max(9, Math.min(60, cam.r*pinch/d)); pinch = d; touched=true;
+      }
+      tip.classList.remove("on"); return;
+    }
+    const hit = pick(ev);
+    if (hit!==hovered){ hovered = hit; refresh(); }
+    stage.classList.toggle("over", !!hit);
+    if (hit){
+      const b = stage.getBoundingClientRect(), e = hit.e;
+      const q0 = e.q.replace(/“/g,"‘").replace(/”/g,"’"), q = q0.length>96 ? q0.slice(0,94).trimEnd()+"…" : q0;
+      tip.innerHTML = `${e.y} · ${esc(SCHOOLS[e.s].n)}<br><i>“${esc(q)}”</i>`;
+      const tx = Math.min(ev.clientX-b.left+14, b.width-290), ty = Math.max(ev.clientY-b.top-70, 6);
+      tip.style.transform = `translate(${Math.max(6,tx)}px,${ty}px)`; tip.classList.add("on");
+    } else tip.classList.remove("on");
+  });
+  function up(ev){
+    if (ptrs.has(ev.pointerId)){
+      ptrs.delete(ev.pointerId); stage.classList.remove("dragging");
+      if (moved<=5 && ev.type==="pointerup"){ const hit = pick(ev); if (hit){ stopPlay(); select(hit.e.i); } }
+    }
+    pinch=0;
+  }
+  stage.addEventListener("pointerup",up); stage.addEventListener("pointercancel",up);
+  stage.addEventListener("pointerleave",()=>{ tip.classList.remove("on"); if(hovered){hovered=null;refresh();} });
+  stage.addEventListener("wheel",ev=>{ ev.preventDefault(); touched=true; cam.r = Math.max(9, Math.min(60, cam.r*Math.exp(ev.deltaY*0.0012))); },{passive:false});
+
+  /* frame */
+  const v = new THREE.Vector3();
+  function frame(now){
+    animCam(now);
+    const baseR = cam.r; cam.r = baseR*(cam.rFit||1); placeCamera(now); cam.r = baseR;
+    if (!reduceMotion) halo.scale.setScalar(1 + 0.18*Math.sin(now/380));
+    if (selPin){
+      const bob = reduceMotion ? 0 : 0.14*Math.sin(now/300);
+      const hy = selPin.head.position.y;
+      arrow.position.set(selPin.x, hy + 1.4 + bob, selPin.z); arrowRim.position.copy(arrow.position);
+      gring.scale.setScalar(1 + (reduceMotion?0:0.12*Math.sin(now/380)));
+      v.set(selPin.x, hy + 3.7, selPin.z).project(camera);
+      const w0 = stage.clientWidth, h0 = stage.clientHeight;
+      mark.classList.toggle("off", !selVis || v.z>=1);
+      mark.style.transform = `translate(${((v.x*0.5+0.5)*w0).toFixed(1)}px,${((-v.y*0.5+0.5)*h0).toFixed(1)}px) translate(-50%,-100%)`;
+    }
+    rings.forEach(r=>{ r.m.visible = r.p.head.visible; r.m.position.copy(r.p.head.position); r.m.quaternion.copy(camera.quaternion); });
+    renderer.render(scene, camera);
+    const w = stage.clientWidth, h = stage.clientHeight;
+    labels.forEach(L=>{
+      v.copy(L.pos).project(camera);
+      const on = v.z<1 && !(L.school && state.off.has(+L.el.dataset.i));
+      L.el.style.opacity = on ? (L.school?1:0.95) : (L.school?0.3:0);
+      const x = (v.x*0.5+0.5)*w, y = (-v.y*0.5+0.5)*h;
+      const shift = L.anchor==="r" ? "translate(-100%,-50%)" : "translate(-50%,-50%)";
+      L.el.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) ${shift}`;
+    });
+    requestAnimationFrame(frame);
+  }
+  scene3d = {
+    rebuild,
+    refresh(){
+      refresh();
+      const p = pins[state.sel];
+      if (scan.on){ scan.x = Math.max(SCAN_MIN, Math.min(SCAN_MAX, p.x)); cam.tGoal.set(scan.x, home.t.y - 1.0, home.t.z); return; }
+      cam.tGoal.set(home.t.x*0.7 + p.x*0.3, home.t.y, home.t.z);
+    },
+    home: springHome
+  };
+  rebuild(); scene3d.refresh();
+  requestAnimationFrame(frame);
+}
+
+showEntry();
+/* CSV download: a plain link on an ordinary web host; inside the Claude artifact viewer, saves go through the downloads capability */
+(function(){
+  const a = $("csvdl"); if (!a) return;
+  const label = a.textContent;
+  a.addEventListener("click", async ev=>{
+    if (!(window.claude && typeof window.claude.use === "function")) return;   // GitHub Pages etc.: let the browser download it
+    ev.preventDefault();
+    try {
+      a.textContent = "Preparing…";
+      const dl = await window.claude.use("downloads");
+      if (!dl){ a.textContent = "Download is not available in this view"; setTimeout(()=>a.textContent=label, 3000); return; }
+      const blob = await (await fetch(a.getAttribute("href"))).blob();
+      await dl.save({filename:"jog_definition_passages.csv", data:blob});
+      a.textContent = "Saved";
+    } catch (e) {
+      a.textContent = (e && e.code==="declined") ? label : "Download is not available in this view";
+    }
+    setTimeout(()=>a.textContent=label, 2500);
+  });
+})();
+try {
+  if (!window.THREE) throw new Error("no three");
+  start3d();
+} catch (err) {
+  const s = $("stage");
+  s.style.cursor = "default";
+  s.insertAdjacentHTML("beforeend", '<p style="padding:24px;max-width:46ch;color:var(--muted)">The 3D diagram could not start in this browser. You can still read every definition with the Earlier and Later buttons.</p>');
+}
+</script>
+</body>
+</html>
