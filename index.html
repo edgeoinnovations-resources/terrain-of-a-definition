@@ -147,10 +147,10 @@ a{color:var(--paper);text-underline-offset:3px}
     <div class="about">
       <h2>How to read the diagram</h2>
       <p>Left to right is time, 1902 to 2026. Ridge height is the number of definitions of that kind printed around that year, smoothed over about a year either side. Every decade from the 1900s to the 2020s is represented.</p>
-      <p>The sorting into eight schools is an interpretation, made by reading each passage. A definition that fits two schools was placed with the idea it leans on hardest.</p>
+      <p>The sorting into ten schools is an interpretation, made by reading each passage. A definition that fits two schools was placed with the idea it leans on hardest. The two ridges at the back, “A way of thinking” and “Many geographies,” were added on 27 November 2026 after a second reading found definitions that name a method or a plurality rather than a subject matter; the pins that moved there are ringed in white.</p>
       <p>Quotations were cleaned of scanning errors. The file sometimes lists a passage under the article next to the one it came from, so check the DOI before citing.</p>
       <h2>The data</h2>
-      <p>Every pin comes from one CSV of passages found by scanning the Journal for sentences that define geography: 1,549 passages with year, author, title, volume, DOI and the surrounding text, including the passages that were read and not pinned. <a href="data/jog_definition_passages.csv" download="jog_definition_passages.csv" id="csvdl">Download the CSV</a> (1.1 MB).</p>
+      <p>Every pin comes from one CSV of passages found by scanning the Journal for sentences that define geography: 1,549 passages with year, author, title, volume, DOI and the surrounding text, including the passages that were read and not pinned. <a href="data/jog_definition_passages.csv" download="jog_definition_passages.csv" id="csvdl">Download the CSV</a> (1.1 MB). A second, smaller CSV holds the 359 passages that state a definition outright, each with a coded rhetorical function and, since 27 November 2026, a school code; the code reads the passage as a whole, so where one passage holds several definitions its pins may sit on different ridges. <a href="data/jog_definition_passages_coded.csv" download="jog_definition_passages_coded.csv">Download the coded CSV</a> (0.3 MB).</p>
     </div>
   </aside>
 </div>
@@ -167,7 +167,9 @@ const SCHOOLS = [
   {k:"space", n:"Distribution, place, region", c:"#7095ea", d:"Geography is the science of where things are: distributions, places, regions and landscapes."},
   {k:"adj",   n:"People adjust to the land", c:"#ead56a", d:"Geography studies human adjustment and response to environment; human ecology."},
   {k:"home",  n:"The Earth as the home of man", c:"#f3a65a", d:"The stock classroom definition of the period."},
-  {k:"rel",   n:"Mutual relations",          c:"#52b9c6", d:"Geography studies the relations between people, life and environment."}
+  {k:"rel",   n:"Mutual relations",          c:"#52b9c6", d:"Geography studies the relations between people, life and environment."},
+  {k:"think", n:"A way of thinking",       c:"#d98cc9", d:"Geography defined as a method or habit of mind \u2014 a way of asking where and why there \u2014 rather than a subject matter."},
+  {k:"many",  n:"Many geographies",        c:"#9db36a", d:"Definition by enumeration: traditions, themes, and an embraced plurality instead of a single sentence."}
 ];
 const SI = {}; SCHOOLS.forEach((s,i)=>SI[s.k]=i);
 
@@ -472,6 +474,7 @@ const OLD7="Added in the second 21 November 2026 update.";
 const OLD8="Added in the 22 November 2026 update.";
 const OLD9="Added in the 23 November 2026 update.";
 const NEW="Added in the 24 November 2026 update, the last one.";
+const MOVED="Moved to this ridge on 27 November 2026, when the two newest ridges, \u201cA way of thinking\u201d and \u201cMany geographies,\u201d were added.";
 const SPILL="The text reads as if it belongs to a neighbouring article in the same issue.";
 /* ---------- definitions: [year, school, quotation, who is quoted (if named), source key, note] ---------- */
 const D = [
@@ -509,7 +512,7 @@ const D = [
 [1908,"home","In the matter of definition for the science we have not gone far beyond [Ritter's] conception, that geography treats of the earth as the home of man.","Carl Ritter, as the note reports him","n08",OLD9],
 [1908,"rel","I believe that geography is a study of the earth in its relation to life—plant, animal, and human; that neither the study of the earth unrelated to life nor the study of life without emphasis on its relations to the earth is geography.","“A Brief Confession of a Geographic Faith”","gss",OLD9],
 [1908,"desc","The teacher's greatest difficulty is to remove from the mind of the student the impression that geography is a science of an indefinite number of isolated facts.","","srf",OLD9],
-[1909,"whole","One of the most beautiful and perplexing things about geography is that it is not a subject of study at all … It ramifies; it percolates; it trickles down through everything you try to teach.","","n09"],
+[1909,"many","One of the most beautiful and perplexing things about geography is that it is not a subject of study at all … It ramifies; it percolates; it trickles down through everything you try to teach.","","n09",MOVED],
 [1910,"open","To discuss the nature and limits of organic geography seems to require a definition of geography. Attempts to define may be confusing and unprofitable.","","n10"],
 [1911,"rel","Elementary geography is essentially a fact study. Its content is chosen for the information it yields concerning the relation of life to the earth.","","gr1",OLD9],
 [1911,"open","When one hears a geography lesson as it is conducted according to the present course of study in the Chicago schools, one naturally asks whether geography is every thing, or anything.","","wig",OLD9],
@@ -570,7 +573,7 @@ const D = [
 [1926,"rel","… geography in its broadest sense “a study of the environment in its relation to man's activities.”","","von"],
 [1926,"adj","There has gradually arisen in America the idea that geography is the study of the adjustment of man's activities to the environment.","","ren"],
 [1927,"open","I have no fault to find with attempts to define geography. I would not object to trying it myself, when I find a dearth of more interesting things to do.","","bri",OLD9],
-[1927,"open","Whether you put distribution, or geographic influence, or what not, into your definition of geography, you can … enter on a task that is great and alluring.","","bri"],
+[1927,"many","Whether you put distribution, or geographic influence, or what not, into your definition of geography, you can … enter on a task that is great and alluring.","","bri",MOVED],
 [1927,"rel","Geography is the study of the interrelations between man and his environment.","","bro"],
 [1928,"rel","The author believes that the ideal geography is a study of relations.","A publisher's advertisement","a28",OLD9],
 [1928,"rel","Geography deals with the relationships which exist between the physical environment and human activities.","","han"],
@@ -589,7 +592,7 @@ const D = [
 [1932,"rel","In its truest sense the nature of geography is that of relationship: relations between the organic and inorganic world.","","kop"],
 [1932,"rel","Modern geography is the scientific study of the relationship of cultural (man-made) items to the natural environmental (provided by nature) items.","","log"],
 [1932,"rel","… the modern definition of geography as a study of the interrelations existing between human needs and activities and the natural environment.","","thr"],
-[1933,"open","The British statesman who defined geography as a state of mind has given us the best definition of the subject that has ever been formulated. Geography is not a study of the earth as the home of man; it is what one thinks about as one studies how human life adjusts itself to the natural world.","","mcw",OLD9],
+[1933,"think","The British statesman who defined geography as a state of mind has given us the best definition of the subject that has ever been formulated. Geography is not a study of the earth as the home of man; it is what one thinks about as one studies how human life adjusts itself to the natural world.","","mcw",OLD9+" "+MOVED],
 [1933,"rel","The assumption in certain sections that geography is a study of “relationships” will not be endorsed generally.","Davis, reviewing the NSSE Yearbook","dhd",OLD9],
 [1933,"rel","In my opinion geography is primarily a natural science, the science of the earth in its relation to man.","A geographer's letter, quoted by Berry","ber",OLD9],
 [1933,"rel","… geography in its attempt to interpret man's interrelationships with his natural environment …","","ree"],
@@ -664,7 +667,7 @@ const D = [
 [1953,"rel","Geography, as the term is used in a broad sense, in the curriculum of the elementary grades deals with the relation of man and his environment.","","slc",OLD3+" Also filed under the preceding article, Doerr's “The Salt Industry of Southwestern Puerto Rico.”"],
 [1953,"space","Geography is the study of places and areas and the relations among them, and we learn these things by studying places and areas.","","hts",OLD3],
 [1954,"space","This geography observes and records the facts of area differentiation on the earth, but goes further in seeking the causes and consequences of both physical and cultural processes.","A publisher's advertisement for a college text","a54",OLD9],
-[1954,"open","This is our opportunity to raise the perennial question: “What is Geography?” and to introduce the students to the many definitions which have been attempted.","A college seminar syllabus","stm",OLD9],
+[1954,"many","This is our opportunity to raise the perennial question: “What is Geography?” and to introduce the students to the many definitions which have been attempted.","A college seminar syllabus","stm",OLD9+" "+MOVED],
 [1954,"adj","Human geography has been defined as the science which deals with the adaptation, in the widest sense, of human groups to their natural environment.","","gel",OLD3],
 [1954,"space","Geography is the strategy of men, space and resources in a world of motion.","","hof",OLD3],
 [1954,"space","Human Geography is the Study of the Earth's Surface [as] Modified by Man the Inhabitant.","The masthead of J. B. Jackson's magazine Landscape","g54",OLD3],
@@ -700,9 +703,9 @@ const D = [
 [1962,"space","Similar difficulties have been encountered when attempts are made to define geography as the study of regions or land occupance per se.","A definition Chardon finds inadequate","chd",OLD5],
 [1963,"space","Just as history deals with the sequence of human affairs in time, so geography deals with man, plus his environment, in his distribution through space.","Floyd's gloss on “many methodological geographers,” opening a two-page gallery of definitions","fly",OLD8],
 [1963,"space","Geography is the science of places, concerned with the qualities and potentialities of countries.","Paul Vidal de la Blache, in Floyd's gallery","fly",OLD8],
-[1963,"space","Geography tells what is where, why and what of it.","Isaiah Bowman, in Floyd's gallery","fly",OLD8],
+[1963,"think","Geography tells what is where, why and what of it.","Isaiah Bowman, in Floyd's gallery","fly",OLD8+" "+MOVED],
 [1963,"open","Geography is what I like.","Anonymous, in Floyd's gallery","fly",OLD8],
-[1963,"rel","Geography tells why man does what he does where he does it.","Anonymous, in Floyd's gallery","fly",OLD8],
+[1963,"think","Geography tells why man does what he does where he does it.","Anonymous, in Floyd's gallery","fly",OLD8+" "+MOVED],
 [1963,"space","Geography is the science that describes the earth's surface with particular reference to the differentiation and relationship of areas.","Glossary Committee of British Geographers, in Floyd's gallery","fly",OLD8],
 [1963,"space","The main concern of the geographer is with the distribution of man and his material works, and with the unravelling of the causes and consequences of inequalities in that distribution.","George H. T. Kimble, in Floyd's gallery","fly",OLD8],
 [1963,"space","Geography is the study of the areal differentiation of the earth surface, as shown in the character, arrangement, and inter-relations over the earth of elements such as climate, relief, soil, vegetation, population, land use, industries, or states.","American College Dictionary, in Floyd's gallery","fly",OLD8],
@@ -710,7 +713,7 @@ const D = [
 [1964,"space","Geography is the science of places, not of men.","Paul Vidal de la Blache, quoted by Scarfe","scf",OLD8],
 [1964,"space","Geography has never been a science of man but the science of the land of the earth's surface.","Carl Sauer, quoted by Scarfe","scf",OLD8],
 [1965,"space","“Geography is at once the art of regional descriptions and the science of spatial relations”; “The essence of geography is the study of spatial relations.”","Statements from a book under review","b65",OLD9],
-[1965,"space","Geography is concerned with spatial relationships. It analyzes the similarities and disparities of different places on the earth, and then asks the question “Why?”","","hel",OLD9],
+[1965,"think","Geography is concerned with spatial relationships. It analyzes the similarities and disparities of different places on the earth, and then asks the question “Why?”","","hel",OLD9+" "+MOVED],
 [1965,"desc","Modern geography then is not just a description of the earth. Geography is not the mere accumulation of facts about an area of the world. Geography is not a series of memorized locations on a map.","","mor",OLD9],
 [1965,"rel","“The visitor is impressed by the notion of the struggle between man and nature, nature by which man has been formed and which, in his turn, he has transformed.” There are less meaningful definitions of the discipline of geography in current collegiate-level textbooks.","The Swiss National Exhibition, as Merriam reports it","mrm",OLD9],
 [1966,"home","To understand why geography is studied, we must know what geography is. Stated simply, geography is the study of the earth as the home of man.","","hws",OLD9],
@@ -724,9 +727,9 @@ const D = [
 [1967,"rel","Geography is also sometimes mistakenly defined as the study of environmental relations. All geographic patterns are assumed to be explained by the distribution and character of some physical features.","Steinhauser, rejecting it","stn",OLD9],
 [1967,"space","The author defines geography for the layman as an “awareness concerning geodiversity.”","John K. Wright, as a reviewer reports him","b67",OLD9],
 [1967,"rel","Geography is that particular view of knowledge which focuses on man-physical environment relationships within their spatial (regional) framework.","","wht",OLD9],
-[1968,"space","Geography is a point of view expressed by the word “spatial” or, more specifically, by the phrase “earth-spatial distributions,” and geography can be defined in terms of “patterns” and “processes.”","","nos",OLD9],
+[1968,"think","Geography is a point of view expressed by the word “spatial” or, more specifically, by the phrase “earth-spatial distributions,” and geography can be defined in terms of “patterns” and “processes.”","","nos",OLD9+" "+MOVED],
 [1969,"home","It is in essence the study of the earth's surface as the home of man; or, in more modern terminology, of man's ecosystem.","","pj9",OLD9],
-[1970,"space","Any spatial phenomena can be encompassed within three geographic elements: place, route, and boundary. Geography is defined sequentially and developed as a systematic way of viewing human activities on the earth.","","stb",OLD9],
+[1970,"think","Any spatial phenomena can be encompassed within three geographic elements: place, route, and boundary. Geography is defined sequentially and developed as a systematic way of viewing human activities on the earth.","","stb",OLD9+" "+MOVED],
 [1970,"open","In the library of the College in which the present writer lectures, there are 47 printed definitions of geography! Can any two geographers agree on the definition of geography which each one, when asked separately, would give?","","now",OLD9],
 [1970,"whole","Geography might well be defined as the science of areal connectivity, rather than the study of areal differentiation.","","jmr",OLD9],
 [1970,"space","Although geography deals with the spatial configuration of the earth's surface, it is commonly taught with abstractions.","","dls",OLD9],
@@ -734,13 +737,13 @@ const D = [
 [1970,"space","Geography concerns itself with the significant attributes of places, the most significant being two-legged creatures who are endowed with the power of volition.","","wpt",OLD9],
 [1971,"open","If in any way it can help to demolish the ingrained conception of a simplistic geography. We in the profession are in reasonable agreement concerning the nature of modern geography and its scholarly objectives. Changing the name of our subject contributes nothing to a change in the goal.","Floyd, on renaming the field “geonomics”","fl1",NEW],
 [1971,"open","Having been initially schooled in another discipline, this reviewer is constantly amazed at the persistent and continual attempts to define geography. Whether these attempts arise from an inferiority complex or a deep malaise is not known.","A reviewer of two books on the nature of geography","bb1",NEW],
-[1971,"open","Having heard for so long that geography is not defined by its subject matter but by how it looks at things, we want to bring geography to the service of the major social issues of today.","","gji",NEW],
+[1971,"think","Having heard for so long that geography is not defined by its subject matter but by how it looks at things, we want to bring geography to the service of the major social issues of today.","","gji",NEW+" "+MOVED],
 [1971,"open","Geography, whether it is defined as an environmental-ecological or spatial science, is one of the most relevant social sciences.","","mji",NEW],
 [1972,"desc","Geography was still defined by most as physical geography. Textbooks in 1890 were still based on “sailor geography” and were “nothing but compilations of miscellaneous geographic information.”","Whittemore, on the Journal's founding years","whm",NEW],
 [1972,"open","Such a statement would have been easier to produce if the Task Force had available a commonly accepted definition of geography. The matrix is suggested as an alternative to yet another effort to reach a commonly accepted definition.","An NCGE research task force","eli",NEW],
 [1972,"space","A belief in a timeless, immaterial space makes it possible for some geographers to imagine that the statement “Geography is the science of space” has roughly the same meaning as “geology is the science of rocks.”","Eliot, doubting it","eli",NEW],
 [1972,"space","After all, the old truth is that geography is the science of space in its coordination of physical and human factors.","A panel of geographers in government and industry, as a correspondent reports","gf2",NEW],
-[1972,"open","The umbrella definitions used are: earth writing, man/land relationships, areal differentiation, spatial interrelationships, spatial dynamics, and spatial organization. The series of lectures is concluded with a working definition: geography is the discipline that studies the natural and cultural environments.","Mitchell's introductory course","mcl",NEW],
+[1972,"many","The umbrella definitions used are: earth writing, man/land relationships, areal differentiation, spatial interrelationships, spatial dynamics, and spatial organization. The series of lectures is concluded with a working definition: geography is the discipline that studies the natural and cultural environments.","Mitchell's introductory course","mcl",NEW+" "+MOVED],
 [1973,"space","“Associations of phenomena that give character to particular places, and the likenesses and differences among places.” This definition of geography, frequently referred to as areal differentiation, has a lengthy legacy. As an all-inclusive definition it failed in a number of ways.","American Geography: Inventory and Prospect (1954), quoted and weighed by Walter and Bernard","wb3",NEW],
 [1974,"adj","Davis defined geography as an explanatory description of the physical character of an area followed by a description of the human response to these conditions.","William Morris Davis, as Preston James recalls him","pji",NEW],
 [1974,"space","No matter how a geographer defines his field of specialization, the distinctive mark of a geographer is a concern with the significance of location on the face of the earth.","","pji",NEW],
@@ -748,13 +751,13 @@ const D = [
 [1975,"home","The definition of geography as the study of man and the realities of his socioeconomic milieu is the thesis on which this course in urban geography is based.","Michael Eliot Hurst's course, in an ERIC abstract","haf",NEW],
 [1975,"desc","The traditional perception which many students have of geography as a dull collection of facts and figures about places can and should be corrected.","","aug",NEW],
 [1976,"rel","Geography has often been defined as the science which is concerned with the interrelationships which exist between earth and man.","","gbi",NEW],
-[1976,"space","To all the learned world the “geographic method” is known as the study of the localization and extension of terrestrial phenomena.","","sau",NEW],
+[1976,"think","To all the learned world the “geographic method” is known as the study of the localization and extension of terrestrial phenomena.","","sau",NEW+" "+MOVED],
 [1976,"infl","According to the textbooks, geography is the study of how the earth influences man and how man influences the earth. In a text published in 1916, the first section heading is entitled “The Earth Shapes Man's Ways of Living.”","Jackson, on high school texts still in use","rhj",NEW],
 [1976,"open","Declining interest in precollegiate geography may be related to attempts of professional geographers to define geography so narrowly that curriculum builders are given a restrictive and distorted image of the scope of geography.","Harvey Heiges, in a conference abstract","ncp",NEW],
 [1976,"space","Geology is rocks, botany is plants, history is time, sociology is people, and geography is place. Many geographers still believe that the characteristic that defines geography is its prime concern with particular areas.","","jlr",NEW],
 [1976,"space","A definition of geography as “the science of distributions” is not very helpful. Other disciplines are interested in the distribution of, for example, rocks, plants, and ethnic groups.","Robinson, rejecting it","jlr",NEW],
 [1978,"space","Three fundamental organizational concepts: spatial location, spatial distribution, and spatial relation. This does not result in a definition of geography solely in terms of the locations of places, but to ignore these concepts is to fail to undertake geographic study.","","mci",NEW+" Also filed under the following article, Catling's “The Child's Spatial Conception.”"],
-[1978,"space","One needs a new definition of geography. The subject must be seen as a group of methods for analyzing data that emphasize relative location as a clue to understanding complex human phenomena.","","lbb",NEW],
+[1978,"think","One needs a new definition of geography. The subject must be seen as a group of methods for analyzing data that emphasize relative location as a clue to understanding complex human phenomena.","","lbb",NEW+" "+MOVED],
 [1979,"desc","Hart defines regional geography as the skillful description of areas and places, the highest form of the geographer's art.","John Fraser Hart, as Walter and Bain report him","wbn",NEW],
 [1979,"open","Drawing maps is what geography is all about. Geography is nothing more than memorizing the countries and their capital cities. Geography is the study of man's adapting to his physical environment. Geography's primary interest is explaining the location of things.","Statements put to Nebraska high school students in a survey of their image of geography","hbs",NEW],
 [1979,"space","The question, What is geography? has been asked many times. Noted scholars in the field, no matter how diverse their answers may appear, seem to agree that geography is a spatial study based upon locational phenomena.","","gbl",NEW+" Also filed under the following item, Richardson and Lougeay's “Italy and Switzerland.”"],
@@ -776,13 +779,13 @@ const D = [
 [1986,"desc","Junior-grade geography texts exclude social issues and concentrate on superficial descriptions of clothing, food, shelter, and transportation. This definition of geography leaves little room for the exploration of contemporary problems.","Massey, on the textbook he helped write","mas",OLD8],
 [1987,"open","Geography cannot, and should not, be defined or classed within the academic structure according to its subject matter.","","tus",OLD9],
 [1987,"space","The core of geography is defined, by its unique nature as a chorological science, as the study of phenomena and processes interrelated with terrestrial space or areas upon the surface of the earth.","","tus",OLD8],
-[1988,"space","One traditional definition of a geographical perspective involves the questions of who and what are where, why they are there and so what.","","lib",OLD9],
+[1988,"think","One traditional definition of a geographical perspective involves the questions of who and what are where, why they are there and so what.","","lib",OLD9+" "+MOVED],
 [1988,"open","“Geography is nothing more than a theoretical ideology based on technical practice alone.” His desire is for geography to be de-defined.","M. E. Eliot Hurst, as a reviewer reports him","r88",OLD9],
-[1988,"open","Modern geography deals with five major themes or topics.","A textbook author; the reviewer calls the implication that this defines geography inaccurate","b88",OLD8],
+[1988,"many","Modern geography deals with five major themes or topics.","A textbook author; the reviewer calls the implication that this defines geography inaccurate","b88",OLD8+" "+MOVED],
 [1989,"open","Geography has essentially been defined by a variety of subject matters rather than by a single subject matter, and this is an unfortunate state of affairs.","","nor",OLD9],
 [1990,"desc","The pupil and his parents feel that geography is simply the acquirement of a miscellany of facts about places and peoples with no significant trend in the whole study.","O. D. Von Engeln, 1919 article reprinted in the Journal's 1990 anniversary issue","ve9",OLD9],
 [1990,"space","Understanding the world today, and the centripetal and centrifugal forces that bind its various regions together and tear them apart.","Robert Harper's definition, as quoted back at him by the authors of the five-themes Guidelines","c9a",OLD8],
-[1990,"open","Perhaps geography might be described as “Four Traditions, Five Themes, and a Bag of Techniques.”","A reader, in the exchange over the five themes","c9b",OLD8],
+[1990,"many","Perhaps geography might be described as “Four Traditions, Five Themes, and a Bag of Techniques.”","A reader, in the exchange over the five themes","c9b",OLD8+" "+MOVED],
 [1990,"space","Geography is the study of places and areas and the relations among them, and we learn these things by studying places and areas.","Richard Hartshorne, 1953 address reprinted in the Journal's 1990 anniversary issue","hs9",OLD8],
 [1990,"infl","Geography is the study of the land and its effect upon its people; history is the study of a people in whose economic, social, and political development the land is an essential and potent factor.","Ellen Churchill Semple, 1904 article reprinted in the Journal's 1990 anniversary issue","sm9",OLD8],
 [1992,"desc","Students come away from their school experience thinking that geography is essentially being able to play target practice on a map.","","mrn",OLD9],
@@ -793,31 +796,31 @@ const D = [
 [1993,"rel","Geography is defined in traditional terms: how people interact with their planet or the study of humans in relation to their environment.","A book under review","r93",OLD7],
 [1994,"desc","… “a science that deals with the earth and its life.”","Richard Boehm's booklet Careers in Geography (1990), quoted by Jacobson","jac",OLD7],
 [1995,"space","Geography is the science of space and place on Earth's surface.","The claim of the National Geography Standards, as Hantula reports it","hnt",OLD7],
-[1995,"open","Geography has no definition other than what geographers do.","The answer Archer gets from his students and non-geography colleagues","arc",OLD7],
+[1995,"many","Geography has no definition other than what geographers do.","The answer Archer gets from his students and non-geography colleagues","arc",OLD7+" "+MOVED],
 [1995,"rel","Geography is the study of variations in the human-environment relationship over the earth's surface.","","arc",OLD7],
 [1995,"desc","“Interactions of cultures, economic activities, and politics” are not in Webster's definition of geography; these don't have anything to do with the science of the earth.","A member of the public commenting on Alaska's draft standards, quoted by Marcello","mrc",OLD7],
 [1996,"whole","Geography is “an integrative discipline that brings together the physical and human dimensions of the world in the study of people, places, and environments.”","Geography for Life: National Geography Standards (1994), quoted by Kimmel","kml",OLD9],
-[1996,"open","What is geography? Geography is many different things to many different people.","","mra",OLD9],
-[1996,"space","Geography can be defined as the discipline that utilizes the spatial approach to the understanding …","","fe1",OLD7+" The passage is cut off mid-sentence in the file."],
+[1996,"many","What is geography? Geography is many different things to many different people.","","mra",OLD9+" "+MOVED],
+[1996,"think","Geography can be defined as the discipline that utilizes the spatial approach to the understanding …","","fe1",OLD7+" The passage is cut off mid-sentence in the file."+" "+MOVED],
 [1996,"space","Geography is the study of spatial distributions and space relations on the Earth's surface.","The National Research Council's The Science of Geography (1965), quoted by Fernald","fe1",OLD7],
-[1996,"space","Geography is the study of people, places, and environments from a spatial perspective.","Geography for Life: National Geography Standards (1994), quoted by Fernald","fe1",OLD7],
+[1996,"think","Geography is the study of people, places, and environments from a spatial perspective.","Geography for Life: National Geography Standards (1994), quoted by Fernald","fe1",OLD7+" "+MOVED],
 [1996,"space","It is necessary to constantly remember and to guide students toward the fact that geography deals with space.","","her",OLD7],
 [1997,"space","Geography is the science which seeks to explain the character of places and the distribution of people, features and events as they occur and develop over the surface of the Earth.","The International Charter on Geographical Education (IGU, 1992), reprinted in the Journal; the 2013 entry quotes the same words via Haubrich","chr",OLD7],
 [1999,"desc","When responding to the question “What is geography?” one fifth grader said, “It's memorizing the states and capitals.”","A fifth grader, quoted by Keiper","kei",OLD9],
 [2000,"rel","The Oxford Dictionary of Geography defines human geography as the study of “relationships between [human] activities and the physical environment.”","","shm",OLD9],
-[2002,"open","My files contain nearly 200 definitions of geography gleaned from various geographic sources. They amply attest the fact that we are “all over the map” in defining what we, as geographers, do.","","grz",OLD9],
-[2002,"space","Geography is the study of what is where, why there, and why care?","Gritzner's “layman's definition,” built on Kant's contrast of history's When? with geography's Where?","grz",OLD7],
-[2002,"space","A stronger statement should have been made that geography is a methodologically defined subject. … The “spatial approach” is the study of phenomena by looking at their areal distribution and interaction.","","fe2",OLD7],
-[2004,"space","Geography is not defined by the study of a particular phenomenon. Rather, geography offers a methodology, a unique way of organizing and analyzing information pertaining to Earth's natural and cultural features in a spatial context.","","gmm",OLD9],
-[2004,"open","While we may not have one single definition of geography, we do have a working definition which sustains the discipline.","","mer",OLD7],
-[2004,"rel","Geography is the science of spatial relationships of humans and their environment. Geography encompasses the physical and human world by examining what is where, why it is there, and what we can make of it.","","lor",OLD7+" Could as easily sit on the spatial ridge; placed here for its human-environment noun."],
+[2002,"many","My files contain nearly 200 definitions of geography gleaned from various geographic sources. They amply attest the fact that we are “all over the map” in defining what we, as geographers, do.","","grz",OLD9+" "+MOVED],
+[2002,"think","Geography is the study of what is where, why there, and why care?","Gritzner's “layman's definition,” built on Kant's contrast of history's When? with geography's Where?","grz",OLD7+" "+MOVED],
+[2002,"think","A stronger statement should have been made that geography is a methodologically defined subject. … The “spatial approach” is the study of phenomena by looking at their areal distribution and interaction.","","fe2",OLD7+" "+MOVED],
+[2004,"think","Geography is not defined by the study of a particular phenomenon. Rather, geography offers a methodology, a unique way of organizing and analyzing information pertaining to Earth's natural and cultural features in a spatial context.","","gmm",OLD9+" "+MOVED],
+[2004,"many","While we may not have one single definition of geography, we do have a working definition which sustains the discipline.","","mer",OLD7+" "+MOVED],
+[2004,"think","Geography is the science of spatial relationships of humans and their environment. Geography encompasses the physical and human world by examining what is where, why it is there, and what we can make of it.","","lor",OLD7+" Could as easily sit on the spatial ridge; placed here for its human-environment noun."+" "+MOVED],
 [2005,"desc","Many geographers define their discipline in terms of the scale at which they claim it operates. This is consistent with the original meaning of the word geography, in that it is a science that deals with the earth's surface and its proximate atmosphere.","","gol",OLD9],
-[2006,"space","… “the study of what is where, why, and so what?”","“A popular shorthand definition,” as Alfred and Maier call it","alf",OLD6],
+[2006,"think","… “the study of what is where, why, and so what?”","“A popular shorthand definition,” as Alfred and Maier call it","alf",OLD6+" "+MOVED],
 [2007,"home","… write of the same thing: people, and their lives in certain times and places.","Weber, 2005, on what the geographer, the poet and the dramatist share, quoted by Kirman","kir",OLD6],
 [2008,"space","Geography is fundamentally the study of place and interaction in the way that history is the study of time and events.","Gregg and Leinhardt (1994), quoted by Sekeres and Gregg","sek",OLD9],
 [2008,"space","Geography, sometimes defined as the science of space and place, with its range of vision over earth science and human affairs, bridges the gap between the sciences and the humanities.","","fuh",OLD9],
 [2009,"space","Students come to understand that geography is concerned with place; that understanding the nature and causes of spatial differentiation on the global surface has been the geographer's task since people first noticed differences between places.","The IB Diploma syllabus, as Semple and Dawson describe it","ibg",OLD9],
-[2009,"whole","“Geography,” one student states, “seems to be the study of many disciplines all rolled into one.”","A student, quoted by Donaldson and Kuhlke","dnk",OLD9],
+[2009,"many","“Geography,” one student states, “seems to be the study of many disciplines all rolled into one.”","A student, quoted by Donaldson and Kuhlke","dnk",OLD9+" "+MOVED],
 [2010,"space","History deals with changes through time while geography deals with variations on Earth's surface.","","alm",OLD5],
 [2011,"whole","It is an integrative discipline that brings together the physical and human dimensions of the world in the study of people, places, and environments.","Geography for Life (1994), quoted by Schmidt","sch",OLD9],
 [2012,"space","Geography is the study of spatial relationships between phenomena on the Earth's surface.","","boe",OLD5],
@@ -827,9 +830,9 @@ const D = [
 [2013,"desc","… learning about places and countries, world knowledge, and doing map work.","How primary pupils define geography, as Bent and colleagues summarise earlier studies","bnt",OLD5],
 [2013,"space","… “the science which seeks to explain the character of places and the distribution of people …”","Hartwig Haubrich, 1992, quoted by Bent and colleagues","bnt",OLD5],
 [2013,"space","Spectral geography can be defined as an examination of the essential spirit that inhabits a place.","","dan"],
-[2014,"open","Historians and geographers both define their disciplines more by perspective than by content.","","hrs",OLD9],
+[2014,"think","Historians and geographers both define their disciplines more by perspective than by content.","","hrs",OLD9+" "+MOVED],
 [2014,"desc","… the study of topics such as landforms, mountains, plateaus and rivers around the world.","A Turkish primary student, quoted by Senyurt","sny",OLD5],
-[2014,"open","… to recognize explicitly several distinct research orientations …","Murphy, describing Pattison's answer to the efforts to define geography","mur",OLD5],
+[2014,"many","… to recognize explicitly several distinct research orientations …","Murphy, describing Pattison's answer to the efforts to define geography","mur",OLD5+" "+MOVED],
 [2014,"space","I believe that geography is the study of spatial aspects of human existence.","A survey statement written by Jo and Bednarz","jbd",OLD5],
 [2015,"space","… the study of the world, the diverse regions of the world, and their various characteristics …","","lry",OLD4],
 [2015,"rel","… “what the earth does to people and what people do to the earth.”","Lucy Sprague Mitchell, 1953, on human geography, quoted by Downs","dow",OLD4],
@@ -840,13 +843,13 @@ const D = [
 [2018,"space","Geography is concerned with the “totality of places” and how seemingly disparate things fit together in the real world.","John Fraser Hart (1982), quoted by Larsen and Harrington","lh8",OLD9],
 [2018,"space","… the study of the spatial attributes of human and physical phenomena and their relations.","","dml",OLD3],
 [2021,"home","… the study of the Earth as the Home of Man — or, as we now say, of Humankind.","D. W. Meinig, 1992, quoted by Larsen and colleagues","lgh",OLD3],
-[2021,"space","Geography is the study of what is where and why.","A common saying, as Larsen and colleagues report","lgh",OLD3],
+[2021,"think","Geography is the study of what is where and why.","A common saying, as Larsen and colleagues report","lgh",OLD3+" "+MOVED],
 [2023,"open","If geographers are engaged in a wide variety of studies, then what exactly is geography?","Jones, on the “eclectic pluralism” of American geography since the 1950s","jon",OLD9],
 [2023,"rel","… geography deals with complex human-environment relationships.","","bmh",OLD3],
-[2025,"open","Hong et al. distinguished seven orientations: globalists, earthists, interactionists, placeists, environmentalists, facilitators and synthesisers.","Teacher orientations to “What is geography?”, reported by Ai and colleagues","aix",OLD9],
+[2025,"many","Hong et al. distinguished seven orientations: globalists, earthists, interactionists, placeists, environmentalists, facilitators and synthesisers.","Teacher orientations to “What is geography?”, reported by Ai and colleagues","aix",OLD9+" "+MOVED],
 [2026,"open","… not to define geography in any singular way but to stimulate discussion and reflection.","","cal"]
 ];
-const E = D.map((r,i)=>({i,y:r[0],s:SI[r[1]],q:r[2],by:r[3],src:R[r[4]],note:r[5]||"",isNew:String(r[5]||"").startsWith(NEW)}));
+const E = D.map((r,i)=>({i,y:r[0],s:SI[r[1]],q:r[2],by:r[3],src:R[r[4]],note:r[5]||"",isNew:String(r[5]||"").includes(MOVED)}));
 
 /* ---------- state ---------- */
 const LAST = 2026, NMAIN = LAST-1902;     // one range, 1902..2026
@@ -854,11 +857,11 @@ const STEPS = NMAIN+1;
 const yearOf = i => 1902+i;
 const stepOf = y => y-1902;
 let saved = (window.claude && window.claude.hot && window.claude.hot.data) || {};
-if (saved.v !== 11) saved = {};
+if (saved.v !== 12) saved = {};
 const firstNew = Math.max(0, E.findIndex(e=>e.isNew));
 const state = { sel: Number.isInteger(saved.sel)?saved.sel:firstNew, reveal: Number.isInteger(saved.reveal)?saved.reveal:STEPS-1, off: new Set(saved.off||[]) };
 if (window.claude && window.claude.hot && window.claude.hot.snapshot)
-  window.claude.hot.snapshot(()=>({v:11,sel:state.sel,reveal:state.reveal,off:[...state.off]}));
+  window.claude.hot.snapshot(()=>({v:12,sel:state.sel,reveal:state.reveal,off:[...state.off]}));
 
 const $ = id => document.getElementById(id);
 const counts = SCHOOLS.map((_,i)=>E.filter(e=>e.s===i).length);
@@ -866,7 +869,7 @@ const counts = SCHOOLS.map((_,i)=>E.filter(e=>e.s===i).length);
 /* ---------- lede with real numbers ---------- */
 (function(){
   const top = counts.indexOf(Math.max(...counts));
-  $("lede").innerHTML = `<b>${E.length} definitions</b> of geography printed in the <b>Journal of Geography</b>, raised into a block diagram. Each ridge is one way of answering the question, and it stands tall where that answer was given often. “${SCHOOLS[top].n}” is the longest range, with ${counts[top]}. Every pin is one definition you can read; the ${E.filter(e=>e.isNew).length} ringed in white were added in the latest update, which fills the 1970s, the last empty stretch.`;
+  $("lede").innerHTML = `<b>${E.length} definitions</b> of geography printed in the <b>Journal of Geography</b>, raised into a block diagram. Each ridge is one way of answering the question, and it stands tall where that answer was given often. “${SCHOOLS[top].n}” is the longest range, with ${counts[top]}. Every pin is one definition you can read; the ${E.filter(e=>e.isNew).length} ringed in white moved to the two newest ridges, “A way of thinking” and “Many geographies,” on 27 November 2026.`;
 })();
 
 /* ---------- reading panel ---------- */
@@ -1094,7 +1097,7 @@ function start3d(){
   [1902,1910,1920,1930,1940,1950,1960,1970,1980,1990,2000,2010,2020].forEach(y=>label(String(y), "year", new THREE.Vector3(X(y), 0, DEPTH+1.15)));
 
   /* camera */
-  const home = {theta:0.2, phi:1.02, r:40, t:new THREE.Vector3(12.0, 0.9, DEPTH/2)};
+  const home = {theta:0.2, phi:0.97, r:44, t:new THREE.Vector3(12.0, 0.9, DEPTH/2)};   // pulled back a little for ten rows
   const cam = {theta:home.theta, phi:home.phi, r:home.r, t:home.t.clone(), tGoal:home.t.clone(), rGoal:null, thGoal:null, phGoal:null};
   let touched = false, t0 = performance.now();
   /* scan mode: zoom in a little and glide along the time axis; any other interaction springs the view home */
