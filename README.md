@@ -23,6 +23,8 @@ Time runs left to right. Each ridge is one school of thought — one way of answ
 
 The last two ridges were added on 27 November 2026, after a second reading of the passages found definitions that name a method or a plurality rather than a subject matter: geography as a way of thinking (a point of view, "what is where, why there, and why care"), and geography defined by enumeration (traditions, themes, many geographies, "what geographers do"). The 32 pins that moved to them are ringed in white on the page.
 
+Each school also carries the name its tradition goes by in the academic literature (anti-essentialism, chorography, cosmography, environmental determinism, chorology and the spatial tradition, human ecology/possibilism, the Ritterian formula, the man–land tradition, spatial thinking, disciplinary pluralism), shown in the reading panel, the pin tooltip and on hover over the school chips.
+
 ## What each definition is doing
 
 On 27 November 2026 every defining passage in the coded sheet was read a second way, following Wittgenstein's advice to ask what a word is used for rather than what it means (*Philosophical Investigations* §§11, 43, 65–67, 421). Each passage was assigned one of eight functional moves — boundary work, curricular gatekeeping, legitimation, chartering a subfield, licensing a method, signaling reform, deflating or refusing, codifying the canon — with a short reading of what the definition is doing and a note on the moment it was written in. On the page:

@@ -202,16 +202,16 @@ a{color:var(--paper);text-underline-offset:3px}
 "use strict";
 /* ---------- schools, front row first ---------- */
 const SCHOOLS = [
-  {k:"open",  n:"Declining to define",      c:"#a99cdc", d:"Writers who doubt the question, dodge it, or refuse a single answer."},
-  {k:"desc",  n:"The Earth described",      c:"#c9b596", d:"Geography describes the Earth as it is, with its peoples and products."},
-  {k:"whole", n:"The Earth as a living whole", c:"#7cc884", d:"Geography sees the Earth as an organism, or as the place where every science meets."},
-  {k:"infl",  n:"The land shapes its people", c:"#e0695c", d:"Geography studies how the natural environment influences human life."},
-  {k:"space", n:"Distribution, place, region", c:"#7095ea", d:"Geography is the science of where things are: distributions, places, regions and landscapes."},
-  {k:"adj",   n:"People adjust to the land", c:"#ead56a", d:"Geography studies human adjustment and response to environment; human ecology."},
-  {k:"home",  n:"The Earth as the home of man", c:"#f3a65a", d:"The stock classroom definition of the period."},
-  {k:"rel",   n:"Mutual relations",          c:"#52b9c6", d:"Geography studies the relations between people, life and environment."},
-  {k:"think", n:"A way of thinking",       c:"#d98cc9", d:"Geography defined as a method or habit of mind \u2014 a way of asking where and why there \u2014 rather than a subject matter."},
-  {k:"many",  n:"Many geographies",        c:"#9db36a", d:"Definition by enumeration: traditions, themes, and an embraced plurality instead of a single sentence."}
+  {k:"open",  n:"Declining to define",      c:"#a99cdc", a:"Anti-essentialism", d:"Writers who doubt the question, dodge it, or refuse a single answer."},
+  {k:"desc",  n:"The Earth described",      c:"#c9b596", a:"Chorography (the descriptive tradition)", d:"Geography describes the Earth as it is, with its peoples and products."},
+  {k:"whole", n:"The Earth as a living whole", c:"#7cc884", a:"Cosmography (Humboldt\u2013Ritter holism)", d:"Geography sees the Earth as an organism, or as the place where every science meets."},
+  {k:"infl",  n:"The land shapes its people", c:"#e0695c", a:"Environmental determinism", d:"Geography studies how the natural environment influences human life."},
+  {k:"space", n:"Distribution, place, region", c:"#7095ea", a:"Chorology & the spatial tradition", d:"Geography is the science of where things are: distributions, places, regions and landscapes."},
+  {k:"adj",   n:"People adjust to the land", c:"#ead56a", a:"Human ecology / possibilism", d:"Geography studies human adjustment and response to environment; human ecology."},
+  {k:"home",  n:"The Earth as the home of man", c:"#f3a65a", a:"The Ritterian formula (Erdkunde)", d:"The stock classroom definition of the period."},
+  {k:"rel",   n:"Mutual relations",          c:"#52b9c6", a:"The man\u2013land tradition", d:"Geography studies the relations between people, life and environment."},
+  {k:"think", n:"A way of thinking",       c:"#d98cc9", a:"Spatial / geographical thinking", d:"Geography defined as a method or habit of mind \u2014 a way of asking where and why there \u2014 rather than a subject matter."},
+  {k:"many",  n:"Many geographies",        c:"#9db36a", a:"Disciplinary pluralism (Four Traditions / Five Themes)", d:"Definition by enumeration: traditions, themes, and an embraced plurality instead of a single sentence."}
 ];
 const SI = {}; SCHOOLS.forEach((s,i)=>SI[s.k]=i);
 const MOVES = [
@@ -942,7 +942,7 @@ function showEntry(){
   aside.style.setProperty("--c", sc.c);
   $("p-sch").innerHTML = `<span class="sw"></span>${esc(sc.n)}`;
   $("p-yr").textContent = e.y;
-  $("p-desc").textContent = sc.d;
+  $("p-desc").textContent = sc.d + (sc.a ? " In the academic literature: " + sc.a + "." : "");
   $("p-q").textContent = "“" + e.q.replace(/“/g,"‘").replace(/”/g,"’") + "”";
   $("p-by").innerHTML = e.by ? `<span class="k">Whose words</span>${esc(e.by)}` : "";
   $("p-by").style.display = e.by ? "" : "none";
@@ -990,7 +990,7 @@ const chipEls = [];
 SCHOOLS.forEach((s,i)=>{
   const b = document.createElement("button");
   b.type="button"; b.className="chip"; b.style.setProperty("--c",s.c);
-  b.innerHTML = `<span class="sw"></span>${esc(s.n)} <span class="ct">${counts[i]}</span>`;
+  b.title = s.a; b.innerHTML = `<span class="sw"></span>${esc(s.n)} <span class="ct">${counts[i]}</span>`;
   b.onclick = ()=>{ state.off.has(i)?state.off.delete(i):state.off.add(i); syncChips(); scene3d&&scene3d.refresh(); };
   $("chips").appendChild(b); chipEls.push(b);
 });
@@ -1315,7 +1315,7 @@ function start3d(){
     if (hit){
       const b = stage.getBoundingClientRect(), e = hit.e;
       const q0 = e.q.replace(/“/g,"‘").replace(/”/g,"’"), q = q0.length>96 ? q0.slice(0,94).trimEnd()+"…" : q0;
-      tip.innerHTML = `${e.y} · ${esc(SCHOOLS[e.s].n)}<br><i>“${esc(q)}”</i>`;
+      tip.innerHTML = `${e.y} · ${esc(SCHOOLS[e.s].n)}<br><span style="color:var(--muted)">${esc(SCHOOLS[e.s].a)}</span><br><i>“${esc(q)}”</i>`;
       const tx = Math.min(ev.clientX-b.left+14, b.width-290), ty = Math.max(ev.clientY-b.top-70, 6);
       tip.style.transform = `translate(${Math.max(6,tx)}px,${ty}px)`; tip.classList.add("on");
     } else tip.classList.remove("on");
