@@ -23,6 +23,17 @@ Time runs left to right. Each ridge is one school of thought — one way of answ
 
 The last two ridges were added on 27 November 2026, after a second reading of the passages found definitions that name a method or a plurality rather than a subject matter: geography as a way of thinking (a point of view, "what is where, why there, and why care"), and geography defined by enumeration (traditions, themes, many geographies, "what geographers do"). The 32 pins that moved to them are ringed in white on the page.
 
+## What each definition is doing
+
+On 27 November 2026 every defining passage in the coded sheet was read a second way, following Wittgenstein's advice to ask what a word is used for rather than what it means (*Philosophical Investigations* §§11, 43, 65–67, 421). Each passage was assigned one of eight functional moves — boundary work, curricular gatekeeping, legitimation, chartering a subfield, licensing a method, signaling reform, deflating or refusing, codifying the canon — with a short reading of what the definition is doing and a note on the moment it was written in. On the page:
+
+- **Pins coloured by → What the definition does** recolours the pins by move, with chips to isolate a move.
+- Each pin's panel shows its move, the reading, and (folded) the moment.
+- **Shocks to the field** draws amber walls at 1904 (AAG), 1915 (NCGT), 1948 (Harvard closes geography), 1957 (Sputnik), 1961 (HSGP), 1983 (*A Nation at Risk*), 1984 (Five Themes) and 1994 (National Standards).
+- A move × decade grid in the panel counts all 772 coded passages; selecting a cell isolates that move and jumps to its first pin in that decade.
+
+234 of the 370 pins have a reading; the rest come from passages added on 23–24 November 2026 that the coded sheet does not hold. The readings were made by Claude Science (Anthropic) and are interpretations.
+
 ## Using the page
 
 - **Drag** to turn, **scroll or pinch** to zoom, **select a pin** to read it.
@@ -35,7 +46,7 @@ The last two ridges were added on 27 November 2026, after a second reading of th
 
 [`data/jog_definition_passages.csv`](data/jog_definition_passages.csv) — 1,549 passages found by scanning the Journal for sentences that define geography, with year, authors, title, volume, issue, pages, DOI, the matched pattern, and the surrounding text. It includes the passages that were read and not pinned.
 
-[`data/jog_definition_passages_coded.csv`](data/jog_definition_passages_coded.csv) — the 359 passages that state a definition outright, each with a coded rhetorical function (`move`, `stance`, `audience`, `family`) and a `school` code added on 27 November 2026. The school code reads the passage as a whole; where one passage holds several definitions (Dryer 1905, for instance) its pins may sit on different ridges.
+[`data/jog_definition_passages_coded.csv`](data/jog_definition_passages_coded.csv) — the 359 passages that state a definition outright, each with a coded rhetorical function (`move`, `stance`, `audience`, `family`) and a `school` code added on 27 November 2026. The school code reads the passage as a whole; where one passage holds several definitions (Dryer 1905, for instance) its pins may sit on different ridges. The functional readings shown on the page come from the Expanded edition's sheet, [`terrain-of-a-definition-expanded/data/jog_definition_passages.csv`](https://github.com/edgeoinnovations-resources/terrain-of-a-definition-expanded/blob/main/data/jog_definition_passages.csv).
 
 Each passage was read and sorted by hand. Rules applied: only passages that state, quote or argue a definition of geography were pinned; a rejected definition sits on the ridge of the idea it rejects; duplicates across issues were merged; survey articles (Dryer 1905, Parkins 1934, Griffin 1953, Floyd 1963, Weiss 1981) got one pin per distinct named source. Sorting into schools is an interpretation; a passage fitting two schools went with the idea it leans on hardest. The CSV sometimes lists a passage under the article adjacent to the one it came from, so check the DOI before citing.
 
