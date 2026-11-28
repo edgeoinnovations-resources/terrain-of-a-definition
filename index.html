@@ -27,10 +27,10 @@ body{background:var(--ink);color:var(--text);font-family:var(--ui);font-size:16p
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .app{display:grid;grid-template-columns:minmax(0,1fr) 390px;grid-template-rows:auto minmax(0,1fr) auto;height:100%}
-header{grid-column:1;padding:18px 24px 6px}
-h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,3.2vw,40px);line-height:1.08;margin:0 0 6px;text-wrap:balance;color:var(--paper)}
+header{grid-column:1;padding:14px 24px 8px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(22px,2.1vw,30px);line-height:1.1;margin:0 0 6px;color:var(--paper)}
 h1 em{font-style:italic}
-.lede{margin:0;max-width:66ch;color:var(--muted);font-size:16px}
+.lede{margin:0;max-width:none;columns:2;column-gap:36px;color:var(--muted);font-size:14px;line-height:1.4}
 .lede b{color:var(--text);font-weight:500}
 .stage{grid-column:1;grid-row:2;position:relative;min-height:300px;overflow:hidden;touch-action:none;cursor:grab}
 .stage.dragging{cursor:grabbing}
@@ -120,6 +120,8 @@ a{color:var(--paper);text-underline-offset:3px}
   html,body{height:auto}
   .app{display:block;height:auto}
   header{padding:16px 16px 4px}
+  h1{font-size:clamp(24px,6vw,30px)}
+  .lede{columns:1;font-size:15px}
   .stage{height:380px}
   .lab.school,.lab.gap,.lab.shock{display:none}
   .controls{padding:10px 16px 14px}
